@@ -1,0 +1,18 @@
+Person 1
+00 nose             x=  232.60 y=  198.99 conf=0.990
+01 left_eye         x=  237.21 y=  189.96 conf=0.887
+02 right_eye        x=  225.05 y=  190.19 conf=0.992
+03 left_ear         x=  241.30 y=  189.53 conf=0.144
+04 right_ear        x=  208.08 y=  188.86 conf=0.953
+05 left_shoulder    x=  253.29 y=  225.38 conf=0.932
+06 right_shoulder   x=  183.13 y=  226.79 conf=0.993
+07 left_elbow       x=  265.34 y=  277.79 conf=0.551
+08 right_elbow      x=  168.93 y=  286.72 conf=0.972
+09 left_wrist       x=  263.35 y=  290.46 conf=0.544
+10 right_wrist      x=  204.69 y=  299.83 conf=0.940
+11 left_hip         x=  249.24 y=  333.65 conf=0.926
+12 right_hip        x=  200.38 y=  337.62 conf=0.977
+13 left_knee        x=  280.75 y=  402.72 conf=0.868
+14 right_knee       x=  217.60 y=  408.86 conf=0.957
+15 left_ankle       x=  276.00 y=  504.03 conf=0.615
+16 right_ankle      x=  211.74 y=  512.00 conf=0.767
