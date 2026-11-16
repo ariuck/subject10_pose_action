@@ -43,5 +43,4 @@ Thumbs.db
 # Generated Day02 pose tables
 reports/day02/tables/*.csv
 
-# Generated extra (후영 영상) tables
-reports/huyoung/day02/tables/*.csv
+reports/day03/tables/*.csv

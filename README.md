@@ -232,3 +232,106 @@ Keypoint 좌표
         ↓
 Frame Feature
 ```
+
+## Day 03 - Joint Angle, Normalization & Frame Feature
+
+> 진행 범위: 교재 1~13번 (관절각도 계산, 몸 중심·신체 크기 정규화, 정규화 좌표와 관절각도의 차이)
+> 14번(Near / Far 비교)부터는 직접 촬영한 자료로 이어서 진행할 예정입니다.
+
+### 오늘 배운 내용
+
+- COCO 17 Keypoint와 Confidence 확인
+- COCO Left / Right가 사람 본인 기준이라는 것
+- 세 Keypoint로 두 벡터를 만들어 관절각도 계산
+- 낮은 Confidence 관절로 계산한 각도는 SKIP
+- Hip Center 기준 몸 중심 이동
+- Shoulder Width 기준 크기 정규화
+- 정규화 좌표와 관절각도는 서로 다른 Feature
+
+### Day 03 핵심 흐름 (1~13번)
+
+```text
+YOLO Pose
+        ↓
+COCO 17 Keypoint
++
+Confidence
+        ↓
+관절각도 (팔꿈치·무릎 4개)
+        ↓
+Hip Center로 몸 중심 이동
+        ↓
+Shoulder Width로 크기 정규화
+        ↓
+Normalized Keypoint
+```
+
+### 오늘 추가한 주요 코드
+
+```text
+src/
+└── feature_utils.py
+
+scripts/
+├── 11_check_day03_data.py
+├── 12_joint_angle.py
+└── 13_normalize_pose.py
+```
+
+### 실제 실습에서 확인한 결과
+
+- 데이터 확인 (`11_check_day03_data.py`): 이미지 8장 READY
+  - Near / Far 캔버스 크기 같음
+  - `arms_up_person_b.jpg`와 `arms_up_near.jpg`는 크기는 같지만 픽셀 단위로 완전히 같지는 않음 (INFO)
+- 관절각도 (`12_joint_angle.py`)
+
+| 이미지 | 왼팔꿈치 | 오른팔꿈치 | 왼무릎 | 오른무릎 |
+|---|---|---|---|---|
+| `arms_up_person_a.jpg` | 132.50° | 125.38° | 174.53° | 173.54° |
+| `sit_pose.jpg` | 133.50° | 136.46° | 97.88° | 117.49° |
+| `bend_pose.jpg` | **SKIP** | 158.53° | 174.52° | 173.93° |
+
+  - `sit_pose.jpg`는 무릎이 크게 굽혀져 서 있는 자세(약 174°)와 확실히 구분됨
+  - 팔꿈치 각도는 서 있는 자세와 앉은 자세에서 비슷함 → 관절각도는 "얼마나 굽혔는지"만 설명함
+- 정규화 (`13_normalize_pose.py`, `arms_up_person_a.jpg`)
+  - Hip Center `(326.48, 581.34)`, Shoulder Width `132.85 px`
+  - 골반 중심이 `(0, 0)`이 되고, 어깨 폭이 `1.0`이 되도록 바뀜
+  - 왼손목 `(423.5, 118.8) px` → `(0.730, -3.482)`, 오른손목 `(263.3, 116.4) px` → `(-0.476, -3.500)`
+  - 손목 y가 어깨 y(-1.96)보다 작아 손목이 어깨보다 위에 있다는 것을 정규화 좌표로도 확인
+
+### 실습 중 확인한 문제 - bend_pose.jpg의 왼팔 (SKIP)
+
+| 관절 | 코드 출력 | 최종 기록 |
+|---|---|---|
+| left_elbow_angle | 155.81° | **SKIP (틀림)** |
+| right_elbow_angle | 158.53° | 158.53° |
+| left_knee_angle | 174.52° | 174.52° |
+| right_knee_angle | 173.93° | 173.93° |
+
+- 결과 이미지를 확인하니 오른팔(카메라 쪽 팔)은 맞게 찍혔지만,
+  **왼팔의 팔꿈치·손목이 실제 왼팔이 아니라 오른팔 위에 겹쳐 찍혔다.**
+  실제 왼팔은 몸 반대편에서 아래로 늘어져 손이 허벅지 옆에 있다.
+- 따라서 `left_elbow_angle 155.81°`는 실제 왼팔의 각도가 아니므로 SKIP 하고 사용하지 않는다.
+- 왼팔꿈치 0.817, 왼손목 0.884로 Confidence가 높아서 원래 코드의 Confidence 검사로는 걸러지지 않았다.
+- 그래서 `12_joint_angle.py`에 **겹쳐 찍힌 팔·다리 검사**를 추가했다.
+  한쪽 팔(다리)의 관절이 반대쪽 팔(다리) 선 위에 거의 붙어 있으면(overlap < 0.05)
+  Confidence가 더 낮은 쪽 각도를 SKIP 한다.
+  ```text
+  left_elbow_angle    : SKIP (right_elbow와 겹쳐 찍힘, overlap=0.035)
+  ```
+- 3일차 이미지 8장 중 SKIP 된 것은 bend_pose의 왼팔꿈치 하나뿐이다.
+- 측면 자세에서는 반대쪽 관절이 보이는 쪽 팔다리에 겹쳐 찍힐 수 있으므로, 결과 이미지를 직접 확인해야 한다.
+- 자세한 내용: `reports/day03/bend_pose_left_right_check.md`
+
+### 오늘 이해한 핵심
+
+관절각도는 세 관절로 "관절이 얼마나 굽혀졌는지"를 표현하고,
+정규화 좌표는 골반 중심과 어깨 폭을 기준으로 "관절이 몸 기준 어디에 있는지"를 표현한다.
+두 값은 서로 다른 정보를 담고 있어서 함께 사용해야 자세를 더 잘 설명할 수 있다.
+
+또한 Confidence가 높아도 관절 위치가 틀릴 수 있으므로,
+특히 측면 자세에서는 결과 이미지를 확인한 뒤 각도를 사용해야 한다.
+
+### 다음 진행
+
+14번부터 직접 촬영한 자료로 Near / Far 정규화 비교를 이어서 진행합니다.
