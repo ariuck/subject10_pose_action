@@ -235,8 +235,8 @@ Frame Feature
 
 ## Day 03 - Joint Angle, Normalization & Frame Feature
 
-> 진행 범위: 교재 1~13번 (관절각도 계산, 몸 중심·신체 크기 정규화, 정규화 좌표와 관절각도의 차이)
-> 14번(Near / Far 비교)부터는 직접 촬영한 자료로 이어서 진행할 예정입니다.
+> 진행 범위: 교재 1~15번 (관절각도 계산, 몸 중심·신체 크기 정규화, Near / Far 정규화 전·후 비교)
+> 14번부터는 모션캡처 촬영 때 직접 찍은 영상에서 캡처한 장면을 사용했습니다.
 
 ### 오늘 배운 내용
 
@@ -247,8 +247,10 @@ Frame Feature
 - Hip Center 기준 몸 중심 이동
 - Shoulder Width 기준 크기 정규화
 - 정규화 좌표와 관절각도는 서로 다른 Feature
+- Near / Far 이미지를 같은 방법으로 정규화
+- 정규화 전·후 평균 관절 거리 자동 비교
 
-### Day 03 핵심 흐름 (1~13번)
+### Day 03 핵심 흐름 (1~15번)
 
 ```text
 YOLO Pose
@@ -264,6 +266,8 @@ Hip Center로 몸 중심 이동
 Shoulder Width로 크기 정규화
         ↓
 Normalized Keypoint
+        ↓
+Near / Far 정규화 전·후 평균 관절 거리 비교
 ```
 
 ### 오늘 추가한 주요 코드
@@ -275,7 +279,8 @@ src/
 scripts/
 ├── 11_check_day03_data.py
 ├── 12_joint_angle.py
-└── 13_normalize_pose.py
+├── 13_normalize_pose.py
+└── 14_compare_normalization.py
 ```
 
 ### 실제 실습에서 확인한 결과
@@ -298,6 +303,57 @@ scripts/
   - 골반 중심이 `(0, 0)`이 되고, 어깨 폭이 `1.0`이 되도록 바뀜
   - 왼손목 `(423.5, 118.8) px` → `(0.730, -3.482)`, 오른손목 `(263.3, 116.4) px` → `(-0.476, -3.500)`
   - 손목 y가 어깨 y(-1.96)보다 작아 손목이 어깨보다 위에 있다는 것을 정규화 좌표로도 확인
+
+### 14~15번 - Near / Far 정규화 비교 (직접 촬영한 자료)
+
+같은 사람이 같은 자세(팔을 내리고 정면으로 선 자세)로 카메라에서 가까이·멀리 선 장면을 사용했다.
+
+| 파일 | 원본 영상 | 시간 | 해상도 |
+|---|---|---|---|
+| `data/day03/images/stand_near.jpg` | `20261113_152953.mp4` | 0.10초 | 1080 x 1920 |
+| `data/day03/images/stand_far.jpg` | `20261113_153253.mp4` | 0.10초 | 1080 x 1920 |
+
+교재의 `arms_up_far.jpg`는 같은 캔버스에서 사람을 작게 만든 이미지지만,
+이번에는 실제로 카메라에서 멀리 떨어져 찍은 장면이다.
+
+**14번 - 두 이미지를 같은 방법으로 정규화**
+
+```bash
+python scripts/13_normalize_pose.py --source data/day03/images/stand_near.jpg
+python scripts/13_normalize_pose.py --source data/day03/images/stand_far.jpg
+```
+
+| 항목 | Near | Far |
+|---|---|---|
+| Shoulder Width | 246.24 px | 133.35 px |
+| Hip Center | (510.12, 1078.84) | (525.14, 979.74) |
+| Left Wrist Pixel | (681.1, 1055.3) | (611.9, 960.6) |
+| Left Wrist Normalized | (0.694, -0.095) | (0.650, -0.143) |
+| Left Shoulder Normalized | (0.465, -1.633) | (0.386, -1.693) |
+
+- Far에서는 어깨 폭이 Near의 약 0.54배로 작게 측정되어, 같은 관절의 Pixel 좌표가 크게 달라졌다.
+- 정규화 후에는 같은 관절의 좌표가 서로 비슷한 값이 되었다.
+
+**15번 - 정규화 전·후 평균 관절 거리 비교**
+
+```bash
+python scripts/14_compare_normalization.py \
+  --a data/day03/images/stand_near.jpg \
+  --b data/day03/images/stand_far.jpg \
+  --output normalization_near_far.csv
+```
+
+| 비교 | 평균 관절 거리 |
+|---|---|
+| Pixel 좌표 | `163.60` |
+| Normalized 좌표 | `0.086` |
+
+- 정규화 전에는 화면 속 사람 크기 차이 때문에 17개 관절이 평균 163.60 px 떨어져 있었다.
+- Hip Center와 Shoulder Width로 정규화한 뒤에는 평균 차이가 0.086으로 줄었다.
+- 관절별로 보면 골반(0.007)과 팔꿈치·손목(0.01~0.07)은 거의 같아졌고,
+  오른발목(0.161)과 얼굴 관절(0.13~0.15)에 차이가 가장 많이 남았다.
+  Far에서 발 간격이 Near보다 조금 좁고, 멀리서 찍어 얼굴이 작게 보였기 때문이다.
+- 정규화가 차이를 0으로 만드는 것은 아니지만, 같은 자세를 더 비슷한 숫자로 표현해 준다는 것을 확인했다.
 
 ### 실습 중 확인한 문제 - bend_pose.jpg의 왼팔 (SKIP)
 
@@ -334,4 +390,4 @@ scripts/
 
 ### 다음 진행
 
-14번부터 직접 촬영한 자료로 Near / Far 정규화 비교를 이어서 진행합니다.
+16번(Person A / B 비교)부터 이어서 진행합니다.
