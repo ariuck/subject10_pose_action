@@ -60,6 +60,10 @@ scripts/
 - COCO8-Pose 이미지 8장 Pose 결과 (`reports/day01/pose_*.jpg/.txt`)
 - `reports/day01/pose_demo_output.mp4` (30 FPS, 60 Frame, 640 x 360)
 - IP Webcam 촬영 이미지 Pose 결과 (촬영 후 추가)
+- Mini Challenge (`reports/day01/challenge/`)
+  - COCO8-Pose 추가 이미지 분석: 049번 잘 됨, 110번(8명 겹침) 불안정
+  - 직접 촬영 영상에서 캡처한 4가지 조건: 옆으로 서기, 쪼그려 앉기, 엎드리기, 벽에 붙어 웅크리기
+  - 가장 잘 된 결과: 쪼그려 앉기 / 가장 불안정: 벽에 붙어 웅크리기 (사람 검출 실패)
 
 ### 다음 수업
 
@@ -79,7 +83,7 @@ scripts/
   - `distance_far.jpg`
 - 1일차에서 사용한 실제 MP4
 - 추가: 모션캡처 촬영 때 직접 찍은 동작 영상 36개 (`20261113_*.mp4`)
-- Team Mini Challenge 직접 촬영 이미지 (촬영 예정)
+- Team Mini Challenge: 직접 촬영 영상에서 캡처한 정면 2장, 측면 2장
 
 ### 오늘 학습한 내용
 
@@ -118,6 +122,11 @@ scripts/
   - 사람은 60개 Frame 모두 검출됨
   - 약 `0.80초`의 25~26번 Frame에서 얼굴 주변 Keypoint Confidence가 낮아짐
   - 실제 영상에서 바닥 자세와 얼굴 방향이 함께 나타난 것을 확인
+
+- Team Mini Challenge (방향: 정면 vs 측면)
+  - 정면: 평균 Keypoint Confidence `0.979 / 0.976`, LOW 관절 `0 / 0`
+  - 측면: 평균 `0.794 / 0.785`, LOW 관절 `4 / 4` (전부 카메라 반대쪽 눈·귀·팔)
+  - Threshold 0.30에서는 가려진 팔이 앞쪽 팔과 겹쳐 그려지고, 0.50에서는 제외됨
 
 ### 추가 실습 - 직접 촬영한 동작 영상 36개
 
