@@ -235,8 +235,8 @@ Frame Feature
 
 ## Day 03 - Joint Angle, Normalization & Frame Feature
 
-> 진행 범위: 교재 1~15번 (관절각도 계산, 몸 중심·신체 크기 정규화, Near / Far 정규화 전·후 비교)
-> 14번부터는 모션캡처 촬영 때 직접 찍은 영상에서 캡처한 장면을 사용했습니다.
+> 진행 범위: 교재 1~23번 (관절각도, 정규화, Near / Far 비교, Person A / B 비교, 좌우 반전, 38-D Frame Feature)
+> 14~15번은 모션캡처 촬영 때 직접 찍은 영상에서 캡처한 장면을, 16번부터는 교재 제공 이미지를 사용했습니다.
 
 ### 오늘 배운 내용
 
@@ -249,8 +249,12 @@ Frame Feature
 - 정규화 좌표와 관절각도는 서로 다른 Feature
 - Near / Far 이미지를 같은 방법으로 정규화
 - 정규화 전·후 평균 관절 거리 자동 비교
+- 사람이 달라도 비슷한 자세 비교 (Person A / B)
+- Keypoint 좌우 반전 (x 부호 반전 + Left / Right 관절 교환)
+- 34개 Normalized 좌표 + 4개 관절각도 = 38-D Frame Feature
+- 동작을 설명하는 Feature와 상대 위치 Feature
 
-### Day 03 핵심 흐름 (1~15번)
+### Day 03 핵심 흐름 (1~23번)
 
 ```text
 YOLO Pose
@@ -267,7 +271,15 @@ Shoulder Width로 크기 정규화
         ↓
 Normalized Keypoint
         ↓
-Near / Far 정규화 전·후 평균 관절 거리 비교
+Near / Far · Person A / B 정규화 전·후 비교
+        ↓
+좌우 반전 비교
+        ↓
+Normalized Keypoint 34개
++
+Joint Angle 4개
+        ↓
+38-D Frame Feature
 ```
 
 ### 오늘 추가한 주요 코드
@@ -280,7 +292,9 @@ scripts/
 ├── 11_check_day03_data.py
 ├── 12_joint_angle.py
 ├── 13_normalize_pose.py
-└── 14_compare_normalization.py
+├── 14_compare_normalization.py
+├── 15_flip_keypoints.py
+└── 16_make_frame_feature.py
 ```
 
 ### 실제 실습에서 확인한 결과
@@ -355,6 +369,82 @@ python scripts/14_compare_normalization.py \
   Far에서 발 간격이 Near보다 조금 좁고, 멀리서 찍어 얼굴이 작게 보였기 때문이다.
 - 정규화가 차이를 0으로 만드는 것은 아니지만, 같은 자세를 더 비슷한 숫자로 표현해 준다는 것을 확인했다.
 
+### 16번 - 사람이 달라도 비슷한 Arms Up 자세 비교
+
+```bash
+python scripts/14_compare_normalization.py \
+  --a data/day03/images/arms_up_person_a.jpg \
+  --b data/day03/images/arms_up_person_b.jpg \
+  --output normalization_person_a_b.csv
+```
+
+| 항목 | 결과 |
+|---|---|
+| Person A / B 어깨 폭 | 132.85 px / 160.25 px |
+| Pixel 평균 관절 거리 | `69.40` |
+| Normalized 평균 관절 거리 | `0.339` |
+
+- 정규화 후 차이가 크게 줄었지만, 같은 사람 Near / Far(0.086)보다는 크게 남았다.
+- 사람마다 체형과 팔을 든 각도가 달라서, 정규화로 위치·크기 차이는 줄어도 자세 자체의 차이는 남는다.
+
+### 17~18번 - 좌우 반전 비교
+
+```bash
+python scripts/15_flip_keypoints.py \
+  --left data/day03/images/left_arm_up.jpg \
+  --right data/day03/images/right_arm_up.jpg
+```
+
+| 비교 | 평균 관절 거리 |
+|---|---|
+| 실제 Left Arm Up vs 실제 Right Arm Up | `0.609` |
+| 반전한 Left Arm Up vs 실제 Right Arm Up | `0.121` |
+
+| 관절 | 반전 전 | 반전 후 |
+|---|---|---|
+| left_elbow | 1.342 | 0.188 |
+| right_elbow | 1.532 | 0.149 |
+| left_wrist | 3.096 | 0.221 |
+| right_wrist | 2.994 | 0.357 |
+| left_knee | 0.104 | 0.109 |
+| left_ankle | 0.135 | 0.221 |
+
+- 팔을 올린 쪽을 가장 직접 보여 주는 손목·팔꿈치에서 차이가 크게 줄었다.
+- 무릎·발목은 반전 후 비슷하거나 조금 커졌다. 두 사진이 거울처럼 복사한 것이 아니라 따로 찍은 사진이라 다리 위치가 조금 다르기 때문이다.
+- 좌우 반전은 x 좌표 부호만 바꾸는 것이 아니라 Left / Right 관절 번호도 바꿔야 한다.
+- 왼팔 올리기를 반전해 오른팔 올리기 데이터로 쓰면 데이터 보강에 사용할 수 있지만, 정답 라벨도 오른팔 올리기로 바꿔야 한다.
+
+### 19~21번 - 38-D Frame Feature
+
+```bash
+python scripts/16_make_frame_feature.py
+python scripts/16_make_frame_feature.py --source data/day03/images/arms_up_person_b.jpg
+python scripts/16_make_frame_feature.py --source data/day03/images/arms_up_far.jpg
+```
+
+- `arms_up_person_a.jpg`: 평균 Confidence 0.957, LOW 0개, **Feature count 38**
+  - 관절각도: 팔꿈치 132.50° / 125.38°, 무릎 174.53° / 173.54°
+  - 팔꿈치는 어느 정도 굽혀져 있고, 무릎은 거의 곧게 펴져 있음
+- 한 순간의 자세가 CSV 한 행(34개 정규화 좌표 + 4개 관절각도)으로 저장됨
+
+| 이미지 | 평균 Confidence | LOW Keypoint | 어깨 폭 |
+|---|---|---|---|
+| Person A | 0.957 | 0 | 132.85 px |
+| Person B | 0.958 | 0 | 160.25 px |
+| Far | 0.955 | 0 | 103.78 px |
+
+- Person B와 Far는 어깨 폭이 크게 다르지만, 정규화된 17개 Keypoint의 평균 차이는 `0.143`으로 작았다.
+- Person A와 B는 `0.338`로 더 크게 차이 났다. 화면 속 크기 차이보다 사람·자세 차이가 Feature에 더 크게 남는다.
+
+### 22~23번 - 동작을 설명하는 Feature
+
+- 38개의 숫자가 모든 동작에서 똑같이 중요한 것은 아니다.
+  - Arms Up: 손목·어깨 위치, 팔꿈치 각도
+  - Sit: 무릎 각도, 골반과 무릎의 상대 위치
+- 상대 위치 Feature 예: `left_wrist_y - left_shoulder_y`
+  - 0보다 작으면 손목이 어깨보다 위, 0보다 크면 아래
+  - `arms_up_person_a.jpg`: 왼손목 y `-3.482` - 왼어깨 y `-1.956` = `-1.526` → 손목이 어깨보다 위
+
 ### 실습 중 확인한 문제 - bend_pose.jpg의 왼팔 (SKIP)
 
 | 관절 | 코드 출력 | 최종 기록 |
@@ -390,4 +480,4 @@ python scripts/14_compare_normalization.py \
 
 ### 다음 진행
 
-16번(Person A / B 비교)부터 이어서 진행합니다.
+24번(`17_arms_up_rule.py`, Arms Up 규칙 판정)부터 이어서 진행합니다.
