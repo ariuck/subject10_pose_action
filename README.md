@@ -235,8 +235,9 @@ Frame Feature
 
 ## Day 03 - Joint Angle, Normalization & Frame Feature
 
-> 진행 범위: 교재 1~23번 (관절각도, 정규화, Near / Far 비교, Person A / B 비교, 좌우 반전, 38-D Frame Feature)
-> 14~15번은 모션캡처 촬영 때 직접 찍은 영상에서 캡처한 장면을, 16번부터는 교재 제공 이미지를 사용했습니다.
+> 진행 범위: 교재 1~40번 전체 (관절각도, 정규화, Near / Far 비교, Person A / B 비교, 좌우 반전, 38-D Frame Feature, 영상 Frame Feature, Team Mini Challenge)
+> 14~15번은 모션캡처 촬영 때 직접 찍은 영상에서 캡처한 장면을, 16~23번과 26~28번은 교재 제공 데이터를 사용했습니다.
+> 17번 코드부터는 우리 팀(3팀 — 무인 상점 이상행동 인식) 주제에 맞게 **드러눕기**로 바꿔 진행했고, Mini Challenge는 직접 찍은 영상에서 장면을 캡처해 사용했습니다.
 
 ### 오늘 배운 내용
 
@@ -253,8 +254,11 @@ Frame Feature
 - Keypoint 좌우 반전 (x 부호 반전 + Left / Right 관절 교환)
 - 34개 Normalized 좌표 + 4개 관절각도 = 38-D Frame Feature
 - 동작을 설명하는 Feature와 상대 위치 Feature
+- 팀 동작(드러눕기)을 설명하는 Feature 선택과 규칙 판정
+- 영상의 각 Frame에서 38-D Feature 생성
+- Feature가 시간에 따라 변하는 과정 확인
 
-### Day 03 핵심 흐름 (1~23번)
+### Day 03 핵심 흐름
 
 ```text
 YOLO Pose
@@ -280,13 +284,22 @@ Normalized Keypoint 34개
 Joint Angle 4개
         ↓
 38-D Frame Feature
+        ↓
+동작을 설명하는 Feature 선택 (3팀: 상체 기울기 + 골반-발목 높이)
+        ↓
+영상의 각 Frame에 반복
+        ↓
+시간에 따른 Feature 변화
+        ↓
+Sequence의 재료
 ```
 
 ### 오늘 추가한 주요 코드
 
 ```text
 src/
-└── feature_utils.py
+├── feature_utils.py
+└── team_features.py                 (3팀 추가 Feature: 상체 기울기, 골반-발목 높이, BBox 비율)
 
 scripts/
 ├── 11_check_day03_data.py
@@ -294,7 +307,10 @@ scripts/
 ├── 13_normalize_pose.py
 ├── 14_compare_normalization.py
 ├── 15_flip_keypoints.py
-└── 16_make_frame_feature.py
+├── 16_make_frame_feature.py
+├── 17_lie_down_rule.py              (교재 17_arms_up_rule.py를 팀 동작 드러눕기로 변경)
+├── 18_video_frame_features.py       (38-D + 팀 Feature + BBox 원본 좌표 저장)
+└── 19_team_torso_normalization.py   (팀 추가: 어깨 폭 vs 상체 길이 정규화 비교)
 ```
 
 ### 실제 실습에서 확인한 결과
@@ -469,6 +485,76 @@ python scripts/16_make_frame_feature.py --source data/day03/images/arms_up_far.j
 - 측면 자세에서는 반대쪽 관절이 보이는 쪽 팔다리에 겹쳐 찍힐 수 있으므로, 결과 이미지를 직접 확인해야 한다.
 - 자세한 내용: `reports/day03/bend_pose_left_right_check.md`
 
+### 24번 - 드러눕기 규칙 (3팀, `17_lie_down_rule.py`)
+
+교재는 "양손목이 어깨보다 위인가?"(Arms Up)를 확인하지만,
+우리 팀은 무인 상점 이상행동 중 **드러눕기**를 같은 방식으로 확인했다.
+
+```text
+어깨·골반 Confidence 확인 (최소 0.50), 잘 보이는 쪽 발목 Confidence 확인
+        ↓
+상체 기울기 = 골반 중심 → 어깨 중심 벡터가 세로에서 기운 각도 (0° 서기, 90° 수평)
+골반-발목 높이 = (발목 y - 골반 y) / 상체 길이
+        ↓
+규칙 1: 상체 기울기 >= 60°
+규칙 2: 규칙 1 + |골반-발목 높이| < 0.6  →  Lie Down
+```
+
+```bash
+python scripts/17_lie_down_rule.py --source data/day03/challenge/images/target_near.jpg
+python scripts/17_lie_down_rule.py --source data/day03/challenge/images_extra/bend_forward.jpg
+```
+
+| 이미지 | 상체 기울기 | 골반-발목 높이 | 규칙 1 (기울기만) | Lie Down |
+|---|---|---|---|---|
+| 누움 (가까이) | 86.0° | 0.115 | True | **True** |
+| 누움 (멀리) | 85.6° | -0.001 | True | **True** |
+| 서기 (가까이 / 멀리) | 5.1° / 10.0° | 1.150 / 1.250 | False | **False** |
+| 바닥에 앉기 | 39.7° | 0.115 | False | **False** |
+| 허리 깊게 숙이기 | 77.8° | 1.719 | **True** | **False** |
+| 엎드려 눕기 | 81.1° | -0.046 | True | **True** |
+| (교재) arms_up / sit / bend | 2.1° / 1.3° / 49.0° | 1.34 / 1.00 / 1.67 | False | **False** |
+
+- 상체 기울기 하나만 보면 허리를 깊게 숙인 자세도 누웠다고 판정했다. 교재에서 Sit 사진이 Arms Up = True로 나온 것과 같은 문제다.
+- 발목이 골반보다 한참 아래인지(골반-발목 높이)를 함께 보니 허리 숙이기와 바닥에 앉기를 모두 구분할 수 있었다.
+- **Feature 하나만으로는 비슷한 자세를 구분하기 어렵고, 동작의 의미를 설명하는 Feature를 조합해야 한다.**
+
+### 25~28번 - 영상의 각 Frame을 38-D Feature로 (교재 데모 영상)
+
+```bash
+cp data/day02/videos/pose_quality_demo.mp4 data/day03/videos/feature_demo.mp4
+python scripts/18_video_frame_features.py --max-frames 150
+python scripts/18_video_frame_features.py --max-frames 0
+```
+
+- Total frames `60`, Valid pose frames `60`, Feature count per frame `38` (교재와 같음)
+- CSV 한 행 = 한 Frame. 시간 순서가 CSV 행 순서로 저장됨
+- 3팀용으로 사람 BBox 원본 좌표(`bbox_x1~y2`)와 팀 Feature 3개, `lie_down`도 함께 저장
+- 27번 왼팔꿈치 각도: Frame 1 `140.14°` → Frame 10 `138.44°` → Frame 15 `125.91°` → Frame 20 `115.62°` (점점 굽혀짐)
+- 28번 `left_wrist_y - left_shoulder_y`: Frame 1 `10.99` → Frame 20 `4.19` → Frame 28 `0.747` (손목이 어깨 높이로 올라옴)
+- 데모 영상은 팔굽혀펴기 장면이라 몸이 수평이어서 드러눕기 규칙은 60 Frame 모두 `lie_down = 1`로 판정했다.
+  → 몸이 수평인 운동 자세와 실제로 누운 자세는 한 장으로는 구분되지 않는다. 골반이 바닥에서 떠 있는지, 시간에 따라 움직이는지를 봐야 한다.
+
+### Team Mini Challenge (29~37번) - 드러눕기 vs 서기
+
+- 3팀 주제에 맞춰 Target = **드러눕기**, Contrast = **서기**, 측면 카메라
+- 사진 4장과 영상 1개는 모션캡처 촬영 때 직접 찍은 영상에서 캡처
+  (`target_near` 165214 9.00초, `target_far` 161722 10.00초, `contrast_near` 161202 0초, `contrast_far` 165930 0초, `challenge_action.mp4` = 165214 전체)
+- 결과 정리: `reports/day03/challenge/feature_design.md`
+
+| 확인 항목 | 결과 |
+|---|---|
+| 관절각도 | 무릎은 서기 172° / 눕기 160~164°로 둘 다 펴져 있어 구분이 안 됨. 팔꿈치 차이는 팔 모양 차이 |
+| 정규화 (눕기 Near / Far) | Pixel `198.18` → 어깨 폭 정규화 `8.199` (오히려 커짐) |
+| 이유 | 측면에서는 두 어깨가 겹쳐 보여 어깨 폭이 `124.91px` / `18.99px`로 크게 달라짐 |
+| 팀 추가 비교 (`19_team_torso_normalization.py`) | 상체 길이로 나누면 눕기 Near / Far `0.438`, 서기 Near / Far `0.167`, 눕기 vs 서기 `1.209` |
+| 38-D Feature | 4장 모두 Feature 38개. Target Far는 평균 Confidence `0.623`, LOW 7개 |
+| 선택한 Feature | 상체 기울기, 골반-발목 높이, BBox 가로/세로 비율 |
+| 영상 (808 Frame) | 상체 기울기 서기 약 `7°` → 눕기 `77~93°` (3.3~10.6초 유지) → 서기 약 `1°` |
+
+- 영상에서 `lie_down`은 앉았다 눕는 순간 0.2초, 0.03초짜리로 깜빡였다. 한 Frame 판정만으로 알림을 보내면 안 되고, "일정 시간 이상 누워 있음" 같은 시간 조건이 필요하다.
+- 누워 있는 동안 38-D의 `nose_y`(어깨 폭 정규화)는 -2.85 ~ -0.30으로 흔들렸지만, 상체 기울기는 안정적으로 유지되었다.
+
 ### 오늘 이해한 핵심
 
 관절각도는 세 관절로 "관절이 얼마나 굽혀졌는지"를 표현하고,
@@ -478,6 +564,15 @@ python scripts/16_make_frame_feature.py --source data/day03/images/arms_up_far.j
 또한 Confidence가 높아도 관절 위치가 틀릴 수 있으므로,
 특히 측면 자세에서는 결과 이미지를 확인한 뒤 각도를 사용해야 한다.
 
-### 다음 진행
+동작을 구분할 때는 38개의 숫자를 모두 보는 것이 아니라,
+그 동작을 설명하는 Feature를 골라야 한다. 우리 팀의 드러눕기는
+상체 기울기와 골반-발목 높이를 함께 볼 때 서기·앉기·허리 숙이기와 구분되었다.
+측면 카메라에서는 어깨 폭 정규화가 불안정해서, 상체 길이를 기준으로 하는 것이 더 안정적이었다.
 
-24번(`17_arms_up_rule.py`, Arms Up 규칙 판정)부터 이어서 진행합니다.
+영상에서는 같은 Feature를 Frame마다 만들고, 그 값이 시간에 따라 변하는 것을 확인했다.
+
+### 다음 수업
+
+4일차에는 여러 Frame의 Feature를 시간 순서로 묶어
+하나의 동작을 표현하는 **Sequence**로 확장합니다.
+3팀은 여기에 누워 있는 시간, 골반과 바닥의 상대 높이, 문 위치와 발목 거리·속도 Feature를 추가할 예정입니다.
