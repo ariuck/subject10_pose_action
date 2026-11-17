@@ -77,7 +77,7 @@ def parse_args():
             ROOT
             / "data"
             / "day03"
-            / "team3"
+            / "challenge"
             / "images"
             / "target_near.jpg"
         ),

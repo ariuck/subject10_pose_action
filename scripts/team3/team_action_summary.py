@@ -44,7 +44,7 @@ def parse_args():
 
     parser.add_argument(
         "--tables",
-        default=str(ROOT / "reports" / "day03" / "team3" / "tables"),
+        default=str(ROOT / "reports" / "day03" / "challenge" / "tables"),
     )
 
     parser.add_argument(
@@ -185,7 +185,7 @@ def main() -> None:
             "| " + " | ".join(str(row[key]) for key, _ in md_columns) + " |"
         )
 
-    md_path = ROOT / "reports" / "day03" / "team3" / "team3_action_summary.md"
+    md_path = ROOT / "reports" / "day03" / "challenge" / "team3_action_summary.md"
 
     md_path.parent.mkdir(parents=True, exist_ok=True)
 

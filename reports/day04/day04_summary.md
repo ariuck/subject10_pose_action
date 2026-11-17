@@ -15,8 +15,8 @@ Sequence CSV를 만들었다.
 - sit_stand
 - wave
 
-Mini Challenge에서는 교재 조합 B(`bend_return` VS `sit_stand`)를
-직접 찍은 영상으로 같은 Pipeline에 넣어 Sequence로 만들었다.
+Mini Challenge에서는 우리 팀(3팀 무인 상점 이상행동) 17개 동작을
+정면·측면으로 찍은 영상 36개를 같은 Pipeline에 넣어 Sequence로 만들었다.
 
 ## 2. 오늘 만든 Pipeline
 
@@ -121,16 +121,17 @@ Sequence가 필요하다.
 
 ## 7. Mini Challenge
 
-- Action 1: `bend_return` (`challenge_bend_return.mp4`, 정면, 459 Frame)
-- Action 2: `sit_stand` (`challenge_sit_stand.mp4`, 정면, 662 Frame)
-- Pose / Feature 품질: 두 영상 모두 pose_ok_ratio = 1.0, feature_ok_ratio = 1.0. 평균 Confidence 0.905 / 0.965
+- 데이터: 3팀 17개 동작 × 정면·측면 = 영상 36개 (총 18,950 Frame)
+- Pose / Feature 품질: Pose 성공 18,742 / 18,950 (98.9%). 32개 영상은 pose_ok_ratio = 1.0. 실패는 바닥에서 몸을 말거나 엎드린 장면뿐이었다.
+- 정면 영상(평균 Confidence 중앙값 0.937)이 측면(0.829)보다 품질이 좋았다. 측면은 어깨 폭 정규화가 불안정해 인접 Row 변화량이 크게 부풀었다(중앙값 4.475).
+- Action 1: `faint_back` (16 뒤로 기절하기, 측면, 808 Frame)
+- Action 2: `trip_fall` (17 앞으로 넘어지기, 측면, 374 Frame)
 - 시간 변화가 가장 잘 보였던 Feature:
-  - bend_return: nose_y (-2.16 → +0.70 → -2.18, 머리가 골반 높이까지 내려갔다 복귀), 오른쪽 Wrist y
-  - sit_stand: Hip Center y (1117 → 1030 → 1118), 오른쪽 Knee Angle (177° → 155~166° → 177°)
-- 두 Action에서 가장 크게 달랐던 점: bend_return은 무릎을 펴고 허리만 숙였고, sit_stand는 무릎을 굽혀 앉았다. sit_stand는 높은 책상 위에 올라앉아 앉았을 때 골반이 오히려 화면 위쪽으로 올라갔다.
-- 휴대폰 영상은 21번 코드에서 마지막 Frame 번호가 실제 영상보다 커서 오류가 났다. 실제 마지막 Frame을 쓰도록 수정했다.
+  - faint_back: Hip Center y (1초 안에 약 190px 하강 후 8초 이상 유지), Knee Angle
+  - trip_fall: Hip Center x (1초에 약 380px 앞으로 이동), Knee Angle (넘어진 뒤 70~100°)
+- 두 Action에서 가장 크게 달랐던 점: 기절은 골반이 바닥까지 내려가 오래 머물렀고, 넘어지기는 골반이 앞으로 빠르게 이동한 뒤 높이는 약 40px만 내려가 손·무릎으로 버텼다.
+- 휴대폰 영상은 교재 21번 원본이 End Frame에서 멈춰, Mini Challenge에서만 이를 처리한 사본으로 대표 Frame을 만들었다.
 - 자세한 내용: `reports/day04/challenge/action_sequence_result.md`
-- 팀 추가 과제(3팀 뒤로 기절하기 VS 앞으로 넘어지기): `reports/day04/team3/fall_sequence_result.md`
 
 ## 8. 현재 데이터의 한계
 

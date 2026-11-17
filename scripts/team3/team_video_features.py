@@ -331,7 +331,7 @@ def main() -> None:
         ROOT
         / "reports"
         / "day03"
-        / "team3"
+        / "challenge"
         / "tables"
         / f"{source.stem}_frame_features.csv"
     )

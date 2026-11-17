@@ -60,7 +60,7 @@ from src.team_features import (
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    images = ROOT / "data" / "day03" / "team3" / "images"
+    images = ROOT / "data" / "day03" / "challenge" / "images"
 
     parser.add_argument(
         "--a",
@@ -194,7 +194,7 @@ def main() -> None:
         ROOT
         / "reports"
         / "day03"
-        / "team3"
+        / "challenge"
         / "tables"
         / args.output
     )
