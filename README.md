@@ -314,8 +314,8 @@ scripts/
 ├── 16_make_frame_feature.py
 ├── 17_team_pose_rules.py            (교재 17_arms_up_rule.py를 팀 동작 규칙으로 변경)
 ├── 18_video_frame_features.py       (38-D + 팀 Feature + BBox 원본 좌표 + 규칙 결과 저장)
-├── 19_team_torso_normalization.py   (팀 추가: 어깨 폭 vs 상체 길이 정규화 비교)
-└── 20_team_action_summary.py        (팀 추가: 36개 영상의 팀 Feature를 동작별로 요약)
+├── 18a_team_torso_normalization.py   (팀 추가: 어깨 폭 vs 상체 길이 정규화 비교)
+└── 18b_team_action_summary.py        (팀 추가: 36개 영상의 팀 Feature를 동작별로 요약)
 ```
 
 ### 실제 실습에서 확인한 결과
@@ -566,13 +566,13 @@ python scripts/18_video_frame_features.py --max-frames 0
 - 데모 영상은 팔굽혀펴기 장면이라 몸이 수평이어서 60 Frame 모두 `lie_down = 1`로 판정했다.
   → 몸이 수평인 운동 자세와 실제로 누운 자세는 한 장으로는 구분되지 않는다. 골반이 바닥에서 떠 있는지, 시간에 따라 움직이는지를 봐야 한다.
 
-### 팀 추가 - 17개 동작 영상 36개 전체 (`20_team_action_summary.py`)
+### 팀 추가 - 17개 동작 영상 36개 전체 (`18b_team_action_summary.py`)
 
 ```bash
 for v in data/day02/videos/20261113_*.mp4; do
   python scripts/18_video_frame_features.py --source "$v" --max-frames 0
 done
-python scripts/20_team_action_summary.py
+python scripts/18b_team_action_summary.py
 ```
 
 전체 표: `reports/day03/challenge/team3_action_summary.md`
@@ -602,7 +602,7 @@ python scripts/20_team_action_summary.py
 | 관절각도 | 무릎은 서기 161~173° / 눕기 159~164°로 둘 다 펴져 있어 구분이 안 됨. 팔꿈치 차이는 팔 모양 차이 |
 | 정규화 (눕기 Near / Far) | Pixel `198.18` → 어깨 폭 정규화 `8.199` (오히려 커짐) |
 | 이유 | 측면에서는 두 어깨가 겹쳐 보여 어깨 폭이 `124.91px` / `18.99px`로 크게 달라짐 |
-| 팀 추가 비교 (`19_team_torso_normalization.py`) | 상체 길이로 나누면 눕기 Near / Far `0.438`, 서기 Near / Far `0.167`, 눕기 vs 서기 `1.209` |
+| 팀 추가 비교 (`18a_team_torso_normalization.py`) | 상체 길이로 나누면 눕기 Near / Far `0.438`, 서기 Near / Far `0.167`, 눕기 vs 서기 `1.209` |
 | 38-D Feature | 4장 모두 Feature 38개. Target Far는 평균 Confidence `0.623`, LOW 7개 |
 | 선택한 Feature | 상체 기울기, 골반-발목 높이, BBox 가로/세로 비율 (+ 17개 동작용 팔 올림·두 발목 높이 차·속도 3개) |
 | 영상 (808 Frame) | 상체 기울기 서기 약 `7°` → 쓰러져 누움 `77~93°` (3.3~10.6초 유지) → 서기 약 `1°` |
@@ -634,3 +634,109 @@ python scripts/20_team_action_summary.py
 하나의 동작을 표현하는 **Sequence**로 확장합니다.
 3팀은 여기에 상태가 유지된 시간, 골반과 바닥의 상대 높이, Confidence가 높은 Frame만 쓴 속도,
 키오스크·냉동고·테이블 등 물체 위치와 손목·발목 거리 Feature를 추가할 예정입니다.
+
+## Day 04 - Action Clip & Sequence
+
+> 진행 범위: 교재 1~51번 전체. 본 실습은 교재 제공 영상 6개, Mini Challenge는 우리 팀(3팀) 동작 2개를 모션캡처 촬영 때 직접 찍은 측면 영상으로 진행했습니다.
+
+### 목표
+
+3일차의 38-D Frame Feature를
+영상의 시간 순서대로 연결하여
+Action Sequence를 만든다.
+
+### 사용한 Action
+
+- bend_return
+- leg_raise_lower
+- walk_turn_walk
+- drink_return
+- sit_stand
+- wave
+
+### Pipeline
+
+```text
+Action Clip
+→ Frame
+→ YOLO Pose
+→ COCO 17 Keypoint
+→ Normalization
+→ Joint Angle
+→ 38-D Frame Feature
+→ 시간 순서 유지
+→ Sequence
+→ Action Label
+```
+
+### 주요 코드
+
+```text
+configs/
+├── action_classes.csv               (6개 Action ID·Label·MP4 연결)
+└── day04_challenge_actions.csv      (Mini Challenge: faint_back, trip_fall)
+
+scripts/
+├── 19_check_day04_data.py
+├── 20_check_action_classes.py
+├── 21_extract_clip_keyframes.py     (휴대폰 영상의 마지막 Frame 오류 처리 추가)
+├── 22_build_action_sequences.py
+├── 23_summarize_action_sequences.py
+└── 24_inspect_sequence_stages.py
+```
+
+> 3일차 팀 추가 코드 `19_team_torso_normalization.py`, `20_team_action_summary.py`는 4일차 교재 코드 번호(19~24)와 겹치지 않도록 `18a_`, `18b_`로 이름을 바꿨습니다.
+
+### 주요 결과
+
+- 6개 영상 모두 640x480, 25fps, 정상 열림 (`video_metadata.csv`)
+- `action_classes.csv`의 6개 Action과 MP4 연결 확인: `Action class check: OK`
+- 대표 Frame 18장 (Start / Middle / End)
+- 6개의 Action Sequence CSV 생성
+- 총 824 Frame 처리
+- Pose 성공 824 / 824
+- Feature 생성 성공 824 / 824
+- Action별 Feature의 시간 변화 확인
+
+| Action | 평균 Confidence | 인접 Row 변화량 | 잘 변한 Feature |
+|---|---|---|---|
+| wave | 0.9724 | 0.178 | 오른쪽 Wrist y `-0.03 → -3.05 → -0.04`, 오른쪽 Elbow `177° → 116° → 173°` |
+| drink_return | 0.9538 | 0.113 | 오른쪽 Wrist y `-0.05 → -2.10 → -0.02`, 오른쪽 Elbow `170° → 61° → 172°` |
+| bend_return | 0.9583 | 0.159 | 양쪽 Wrist y `0 → 0.95 → 0`, Hip Center y `249 → 258 → 250` |
+| sit_stand | 0.9743 | 0.101 | Knee `160° / 149° → 178° / 173°`, Hip Center y `286 → 250` |
+| walk_turn_walk | 0.8883 | 17.478 | Hip Center x `472 → 279 → 462` |
+| leg_raise_lower | 0.9678 | 0.217 | 5개 Sample로는 안 보임 → 9개에서 오른쪽 Ankle y `2.4 → 1.81` (1.84초) |
+
+- `sit_stand` 영상은 설명("앉았다가 다시 일어선다")과 달리 앉은 자세로 시작해 일어서는 동작만 있었다. 대표 Frame과 Sequence 값 모두 이렇게 나와 그대로 기록했다.
+- `walk_turn_walk`의 큰 변화량(17.478)은 성능 점수가 아니라 방향 전환·정규화 변화·Keypoint 흔들림이 섞인 값이다.
+- 상세 결과: `reports/day04/day04_summary.md`
+
+### Mini Challenge - 3팀 동작: 뒤로 기절하기 vs 앞으로 넘어지기
+
+| 항목 | faint_back (16번) | trip_fall (17번) |
+|---|---|---|
+| 영상 | 측면 1920x1080 60fps, 13.5초 | 측면 1920x1080 60fps, 6.3초 |
+| rows / Pose 성공 / Feature 성공 | 808 / 808 / 808 | 374 / 374 / 374 |
+| 평균 Confidence / LOW | 0.848 / 1.78 | 0.786 / 3.10 |
+| 잘 변한 Feature | Hip Center y: 1초 안에 약 190px 하강 후 8초 이상 유지 | Hip Center x: 1초에 약 380px 앞으로 이동, 무릎 70~100° 유지 |
+
+- 두 영상 모두 시작과 끝은 서 있는 자세라 처음·마지막 Frame만 보면 차이가 없고, 중간의 시간 변화에서만 구분되었다.
+- 기절은 골반이 바닥까지 내려가 머물렀고, 넘어지기는 골반이 앞으로 빠르게 이동한 뒤 높이는 약 40px만 내려가 손·무릎으로 버텼다.
+- 측면 영상은 어깨 폭 정규화가 불안정해 인접 Row 변화량이 4.2 / 3.2로 크게 나왔다. 그래서 Pixel 좌표(Hip Center)와 관절각도를 중심으로 해석했다.
+- 휴대폰 영상은 기록된 Frame 수(810)가 실제(808)보다 커서 21번 코드가 End Frame에서 멈췄다. 실제 마지막 Frame을 쓰도록 고쳤다.
+- 결과 정리: `reports/day04/challenge/action_sequence_result.md`
+
+### 오늘 확인한 핵심
+
+- Pose는 한 순간의 자세이다.
+- Sequence는 Frame Feature의 시간 흐름이다.
+- Action은 한 Frame이 아니라 시간에 따른 자세 변화로 이해해야 한다.
+- Action마다 중요하게 변하는 Feature가 다를 수 있다.
+- 대표 Sample만으로 동작이 잘 보이지 않으면 더 많은 시점을 확인해야 한다.
+- 사람이 화면에서 이동하거나 쓰러지는 동작은 정규화 좌표만이 아니라 Hip Center 같은 원본 위치도 함께 봐야 한다.
+
+### 다음 수업
+
+Day 05에서는 여러 Subject와 반복 Take를 이용하여
+Sequence 데이터를 학습용 Dataset 구조로 확장하고
+품질검수와 데이터 분리를 진행한다.

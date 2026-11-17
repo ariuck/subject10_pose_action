@@ -170,7 +170,7 @@ def main() -> None:
     lines = [
         "# 3팀 17개 동작 영상 — 팀 Feature 요약",
         "",
-        "`python scripts/20_team_action_summary.py` 결과 (영상 36개, 18번 코드의 Frame별 CSV 사용)",
+        "`python scripts/18b_team_action_summary.py` 결과 (영상 36개, 18번 코드의 Frame별 CSV 사용)",
         "",
         "- p95: 영상 전체 Frame 중 95 백분위수 값 (동작의 최고점에 가까운 값)",
         "- 속도 단위: 1초에 상체 길이의 몇 배만큼 움직였는지 (3 Frame 중앙값으로 다듬은 뒤 계산)",
