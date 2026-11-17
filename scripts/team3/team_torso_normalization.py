@@ -3,7 +3,7 @@ from __future__ import annotations
 # ==================================================
 # 3팀 추가 실습 — 어깨 폭 정규화 vs 상체 길이 정규화
 # ==================================================
-# Mini Challenge 32번에서 측면 카메라로 찍은
+# 팀 추가 과제(누운 자세 Near / Far)에서 측면 카메라로 찍은
 # 누운 자세(Near / Far)를 어깨 폭으로 정규화하자
 # 오히려 차이가 커졌습니다.
 #
@@ -27,7 +27,7 @@ from pathlib import Path
 import numpy as np
 from ultralytics import YOLO
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 sys.path.insert(
     0,
@@ -60,7 +60,7 @@ from src.team_features import (
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    images = ROOT / "data" / "day03" / "challenge" / "images"
+    images = ROOT / "data" / "day03" / "team3" / "images"
 
     parser.add_argument(
         "--a",
@@ -194,6 +194,7 @@ def main() -> None:
         ROOT
         / "reports"
         / "day03"
+        / "team3"
         / "tables"
         / args.output
     )

@@ -53,3 +53,9 @@ reports/day04/tables/*.csv
 reports/day04/challenge/keyframes/*.jpg
 reports/day04/challenge/sequences/*.csv
 reports/day04/challenge/challenge_sequence_summary.csv
+
+# Team3 extra results
+reports/day03/team3/tables/*.csv
+reports/day04/team3/keyframes/*.jpg
+reports/day04/team3/sequences/*.csv
+reports/day04/team3/team3_sequence_summary.csv

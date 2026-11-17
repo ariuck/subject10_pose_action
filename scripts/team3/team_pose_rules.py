@@ -27,7 +27,7 @@ from pathlib import Path
 import numpy as np
 from ultralytics import YOLO
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 
 sys.path.insert(
     0,
@@ -77,7 +77,7 @@ def parse_args():
             ROOT
             / "data"
             / "day03"
-            / "challenge"
+            / "team3"
             / "images"
             / "target_near.jpg"
         ),
