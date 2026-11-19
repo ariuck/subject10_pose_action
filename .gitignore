@@ -57,9 +57,9 @@ reports/day04/challenge/challenge_sequence_summary.csv
 # Day03 Mini Challenge tables
 reports/day03/challenge/tables/*.csv
 
-# Team3 170 videos (generated)
-reports/team3_videos/sequences/
-reports/team3_videos/tables/*.csv
-reports/team3_videos/team3_video_check.csv
-reports/team3_videos/*.jpg
-reports/team3_videos/segments/*.jpg
+# Generated Day05 CSV reports
+reports/day05/tables/*.csv
+
+# Team3 170 videos (generated tables and review images)
+reports/team_projects/team03/tables/*.csv
+reports/team_projects/team03/review_sheets/*.jpg

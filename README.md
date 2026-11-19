@@ -663,6 +663,35 @@ Mini Challenge는 우리 팀(3팀) 17개 동작을 정면·측면으로 찍은 �
 - 기절은 골반이 바닥까지 내려가 머물렀고, 넘어지기는 골반이 앞으로 빠르게 이동한 뒤 손·무릎으로 버텼다.
 - 결과 정리: `reports/day04/challenge/action_sequence_result.md`
 
+### 팀 확장 - 3팀 RGB 영상 170개 (4일차 `RGB영상_전처리_Sequence_Dataset` 문서)
+
+같은 Pipeline을 3팀 전체 영상(5명 × 17동작 × 정면·측면 = 170개)에 자동 반복 적용하고,
+강사님이 제안한 3팀 추가 Feature를 넣어 **45-D Sequence**를 만들었다.
+
+```text
+data/team_projects/team03/rgb/videos/S0x/S0x_A0nn_T0t.mp4   (T01 정면, T02 측면, 실명 대신 S01~S05)
+→ Clip Manifest (configs/team03_clip_manifest.csv)
+→ Keypoint Dataset (원본 Pixel 좌표 + 관절별 Confidence + BBox)
+→ 자동 QA (AUTO_PASS 166 / CHECK 4) → Human QA (PASS 170)
+→ 동작 시작·끝 구간 (영상은 자르지 않고 in_action으로 표시)
+→ 38-D + 3팀 7개 = 45-D Sequence 170개
+```
+
+| 추가 Feature (+7) | 의미 |
+|---|---|
+| `torso_tilt_deg` | 상체 기울기 (0° 서기, 90° 수평) |
+| `bbox_aspect_ratio` | 사람 BBox 가로/세로 비율 |
+| `hip_floor_height` | 골반과 바닥(BBox 아래 끝)의 상대 높이 / 상체 길이 |
+| `left_ankle_speed`, `right_ankle_speed` | 양발목 속도 (상체 길이/초, 0.1초 간격) |
+| `left_wrist_speed`, `right_wrist_speed` | 양손목 속도 — 강사님 표의 "양발과 문 사이 거리" 대신 (영상에 문·물체가 없음) |
+
+- 70,159 Frame 중 Pose 성공 69,926 (99.7%), 45-D 성공 68,813
+- 측면에서는 눕기·쓰러짐이 BBox 비율 2.4~3.2, 골반-바닥 높이 0.3~0.5로 서서 하는 동작(약 0.5 / 1.6)과 잘 구분됐다. 정면에서는 카메라 쪽으로 누워 잘 구분되지 않았다.
+- 손목 속도는 던지기·내려치기, 발목 속도는 냉동고 앞차기 측면에서 높았다.
+- 필요한 자료: 정상행동 비교 영상, 문·물체 위치(ROI), VICON 촬영 목록
+- 코드: `scripts/team03/` (교재 26·27번 3팀 사본, 구간 계산, 45-D Sequence, 확인 사진)
+- 보고서: `reports/team_projects/team03/team03_data_preparation_report.md`
+
 ### 오늘 확인한 핵심
 
 - Pose는 한 순간의 자세이다.
@@ -676,3 +705,131 @@ Mini Challenge는 우리 팀(3팀) 17개 동작을 정면·측면으로 찍은 �
 Day 05에서는 여러 Subject와 반복 Take를 이용하여
 Sequence 데이터를 학습용 Dataset 구조로 확장하고
 품질검수와 데이터 분리를 진행한다.
+
+## Day 05 - Keypoint Dataset QA & Subject-wise Split
+
+> 본 실습은 교재 제공 영상 18개, Mini Challenge는 우리 팀(3팀) 영상으로 진행했습니다.
+
+### Dataset
+
+```text
+3 Subjects
+×
+6 Actions
+×
+1 Take
+=
+18 MP4
+```
+
+```text
+A001 bend_return
+A002 leg_raise_lower
+A003 walk_turn_walk
+A004 drink_return
+A005 sit_stand
+A006 wave
+```
+
+### Pipeline
+
+```text
+18 MP4
+        ↓
+COCO 17 Keypoint Dataset
+        ↓
+자동 QA
+        ↓
+AUTO_PASS 13
+CHECK 5
+        ↓
+Human QA
+        ↓
+Human PASS 18
+        ↓
+Approved 18 Clips
+        ↓
+Subject-wise Split
+        ↓
+S01 → Train
+S02 → Validation
+S03 → Test
+        ↓
+Leakage check: OK
+```
+
+### 주요 결과
+
+- Keypoint CSV: 18개 (Pixel 좌표 + Image Normalized 좌표 + Confidence, Frame당 95개 Column)
+- AUTO_PASS: 13개
+- CHECK: 5개 (S02 A001~A005, single_person_ratio)
+  - 원본 확인 결과 **옷걸이에 걸린 외투**를 두 번째 사람으로 오검출한 것이라 모두 PASS
+- 교재 28·29번 코드는 모든 Clip의 Human QA 입력을 요구해서 AUTO_PASS 13개도 직접 확인하고 PASS로 기록했다
+- Approved Clips: 18개
+- Train: S01 / 6 Clips
+- Validation: S02 / 6 Clips
+- Test: S03 / 6 Clips
+- Subject overlap: 없음
+- Clip overlap: 없음
+
+### Random Frame Split 비교
+
+```text
+Train Frames: 1946
+Test Frames : 487
+
+Subject overlap:
+S01, S02, S03
+
+Clip overlap:
+18
+```
+
+따라서 최종 평가에는 Random Frame Split을 사용하지 않고
+Subject-wise Split을 사용한다.
+
+### 주요 실행 파일
+
+```text
+configs/
+├── day05_subject_split.json
+└── day05_challenge_subject_split.json
+
+scripts/
+├── 25_check_day05_data.py
+├── 26_extract_keypoint_dataset.py
+├── 27_keypoint_qa.py
+├── 28_validate_human_review.py
+├── 29_build_approved_manifest.py
+├── 30_build_subject_split.py
+├── 31_check_split_leakage.py
+└── 32_demo_frame_split_leakage.py
+```
+
+- 교재 코드 8개는 교재 원본 그대로 사용했다.
+
+### Mini Challenge - 3팀 A016 뒤로 기절하기 (S01·S02·S03 측면)
+
+같은 Action 하나를 서로 다른 세 사람이 찍은 3팀 영상으로:
+
+```text
+Keypoint Dataset
+→ 자동 QA (3개 모두 AUTO_PASS)
+→ Human QA (3개 PASS)
+→ Approved Manifest (3개)
+→ Subject-wise Split (S01 Train / S02 Validation / S03 Test)
+→ Leakage check: OK
+```
+
+를 다시 수행했다.
+
+- 교재 26·27번은 Action 기준(A001~A006)과 중요 관절 표가 코드에 고정되어 있어, 3팀 동작표로 바꾼 사본(`scripts/team03/team_extract_keypoint_dataset.py`, `team_keypoint_qa.py`)으로 실행했다. 28~31번은 교재 원본에 옵션만 바꿔 사용했다.
+- 교재 26번은 `--video-root`에 상대 경로를 주면 `relative_to(ROOT)`에서 멈춰서, 3팀 사본에서는 ROOT 기준 경로로 바꿨다.
+- 같은 흐름을 3팀 전체 170개에도 적용했다: Approved 170, Train S01·S02·S03 (102) / Validation S04 (34) / Test S05 (34), Leakage check: OK
+- 결과 정리: `reports/day05/challenge/mini_challenge_result.md`, `reports/team_projects/team03/team03_data_preparation_report.md`
+
+### Next
+
+Day 06에서는 Day 05의 Keypoint Dataset과 Subject-wise Split을 그대로 사용하여
+Body Normalization과 Joint Angle Feature를 만들고
+Action Recognition Baseline 학습으로 연결한다.
