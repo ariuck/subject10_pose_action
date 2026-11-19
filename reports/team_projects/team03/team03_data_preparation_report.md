@@ -153,6 +153,7 @@
 - Test (S05, 처음 보는 사람): 45-D **0.7647 / Macro F1 0.7529** (38-D 0.6765 / 0.6630)
 - 남은 혼동: 물체 없이 팔로 하는 동작끼리(밀치기 ↔ 흔들기, 내려치기·던지기·휘두르기) → 물체 위치(ROI) 정보가 필요하다는 근거
 - 자세한 내용: `reports/day06/challenge/mini_challenge_result.md`
+- Feature를 38-D에서 45-D까지 늘린 과정과 단계별 효과: `reports/team_projects/team03/feature_expansion_log.md`
 
 ## 8. 완료 체크리스트
 

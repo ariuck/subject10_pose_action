@@ -86,10 +86,12 @@ def clip_frames(item, cond: dict):
             keep = seq.loc[frame_ids, "in_action"].to_numpy() == 1
             matrix, frame_ids = matrix[keep], frame_ids[keep]
         if cond.get("team_features"):
-            extra = (seq[TEAM_FEATURES].apply(pd.to_numeric, errors="coerce")
+            # True = 7개 전부, 리스트 = 그 Feature만 (Feature를 단계별로 늘려 보는 실험용)
+            feats = TEAM_FEATURES if cond["team_features"] is True else list(cond["team_features"])
+            extra = (seq[feats].apply(pd.to_numeric, errors="coerce")
                      .interpolate(limit_direction="both").loc[frame_ids].to_numpy(np.float32))
             matrix = np.hstack([matrix, extra])
-            names += TEAM_FEATURES
+            names += feats
     if cond.get("drop_angles"):
         keep_cols = [i for i, n in enumerate(names) if n not in ANGLES]
         matrix, names = matrix[:, keep_cols], [names[i] for i in keep_cols]

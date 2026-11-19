@@ -1,0 +1,26 @@
+validation Accuracy: 0.7941
+validation Macro F1: 0.7902
+
+                    precision    recall  f1-score   support
+
+         body_bump       1.00      1.00      1.00         2
+        faint_back       1.00      0.50      0.67         2
+      freezer_kick       1.00      1.00      1.00         2
+      kiosk_strike       1.00      1.00      1.00         2
+kneel_claw_machine       1.00      1.00      1.00         2
+     lie_back_side       1.00      1.00      1.00         2
+   lie_prone_phone       1.00      1.00      1.00         2
+    push_two_hands       0.00      0.00      0.00         2
+shake_claw_machine       0.33      0.50      0.40         2
+sit_on_chair_phone       1.00      1.00      1.00         2
+        sit_on_mat       1.00      1.00      1.00         2
+sleep_against_wall       0.67      1.00      0.80         2
+      swing_strike       0.50      0.50      0.50         2
+      table_strike       1.00      0.50      0.67         2
+      throw_object       0.33      0.50      0.40         2
+         trip_fall       1.00      1.00      1.00         2
+             vomit       1.00      1.00      1.00         2
+
+          accuracy                           0.79        34
+         macro avg       0.81      0.79      0.79        34
+      weighted avg       0.81      0.79      0.79        34

@@ -926,7 +926,9 @@ Baseline에서 한 가지 조건만 바꿔 Validation으로 비교했다. (`scri
 
 - 교재 18개와 달리 3팀 데이터에서는 Sequence가 Static보다, 각도 포함이 좌표만보다 높았다.
 - 남은 혼동은 물체 없이 팔로 하는 동작(밀치기 ↔ 흔들기, 내려치기·던지기·휘두르기)이었다.
+- Feature를 한 단계씩 늘려 보니 38-D 0.7373 → +자세 3개 0.7647 → +발목 속도 0.7922 → +손목 속도 0.7725 (Validation Macro F1). 늘릴수록 항상 좋아지지는 않았다.
 - 결과 정리: `reports/day06/challenge/mini_challenge_result.md`
+- Feature 확장 과정 기록: `reports/team_projects/team03/feature_expansion_log.md` (3일차 문제 발견 → 4일차 45-D 설계 → 6일차 단계별 효과)
 
 ### Final Selected Config
 
