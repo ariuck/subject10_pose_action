@@ -833,3 +833,143 @@ Keypoint Dataset
 Day 06에서는 Day 05의 Keypoint Dataset과 Subject-wise Split을 그대로 사용하여
 Body Normalization과 Joint Angle Feature를 만들고
 Action Recognition Baseline 학습으로 연결한다.
+
+## Day 06 - Action Recognition Baseline
+
+> 본 실습은 교재 18개 Dataset, Mini Challenge는 우리 팀(3팀) 170개 Dataset으로 진행했습니다.
+
+### Input
+
+Day 05 Approved Keypoint Dataset
+
+- S01 → Train
+- S02 → Validation
+- S03 → Test
+- 6 Actions
+- 18 Clips
+
+### Pipeline
+
+```text
+Keypoint CSV
+→ 38-D Frame Feature
+→ Sequence Resampling (30 Step)
+→ Sequence Feature (1,140)
+→ Random Forest
+→ Validation
+→ Misclassification Analysis
+→ Feature Comparison
+→ Mini Challenge
+→ Final Test
+```
+
+### Action Classes
+
+- bend_return
+- leg_raise_lower
+- walk_turn_walk
+- drink_return
+- sit_stand
+- wave
+
+### Baseline
+
+- Sequence Steps: 30
+- Feature Count: 1140
+- n_estimators: 300
+- max_depth: null
+- random_state: 42
+
+### Baseline Validation
+
+- Accuracy: 0.5000 (교재 0.6667)
+- Macro F1: 0.4444 (교재 0.5556)
+- Correct: 3 / 6
+
+Misclassified:
+
+- walk_turn_walk → leg_raise_lower (교재와 같음, Confidence 0.2133)
+- drink_return → wave (교재와 같음)
+- wave → drink_return (교재에서는 정답)
+
+입력 Keypoint·Sequence·Static·좌표만 결과는 교재와 같았다. wave 한 Clip은 두 Action의 투표가 0.22 근처로 거의 같아,
+Train 6개에서 라이브러리 버전(scikit-learn 1.9.1) 같은 작은 차이로 결과가 뒤집힌 것으로 보인다.
+
+### Feature Experiments
+
+Static VS Sequence
+
+- Static: Accuracy 0.6667 / Macro F1 0.5556
+- Sequence: Accuracy 0.5000 / Macro F1 0.4444
+
+Coordinates + Angles VS Coordinates Only
+
+- Coordinates + Angles: Accuracy 0.5000 / Macro F1 0.4444
+- Coordinates Only: Accuracy 1.0000 / Macro F1 1.0000
+
+※ 현재 데이터가 매우 작기 때문에
+이 결과를 일반적인 성능으로 해석하지 않습니다.
+
+### Mini Challenge - 3팀 17개 이상행동 Baseline
+
+3팀 170개 Dataset (Train S01~S03 102 / Validation S04 34 / Test S05 34)으로 같은 흐름을 반복하고,
+Baseline에서 한 가지 조건만 바꿔 Validation으로 비교했다. (`scripts/team03/team_day06_baseline.py`)
+
+| 조건 | Feature | Validation Accuracy | Validation Macro F1 |
+|---|---:|---:|---:|
+| Baseline (38-D) | 1,140 | 0.7353 | 0.7373 |
+| Static (가운데 Frame) | 38 | 0.5882 | 0.5941 |
+| 좌표만 | 1,020 | 0.6765 | 0.6728 |
+| **3팀 45-D** | 1,350 | 0.7647 | **0.7725** |
+| 동작 구간만 | 1,140 | 0.7941 | 0.7588 |
+| 정면만 / 측면만 | 1,140 | 0.6471 / 0.6471 | 0.5882 / 0.5529 |
+
+- 교재 18개와 달리 3팀 데이터에서는 Sequence가 Static보다, 각도 포함이 좌표만보다 높았다.
+- 남은 혼동은 물체 없이 팔로 하는 동작(밀치기 ↔ 흔들기, 내려치기·던지기·휘두르기)이었다.
+- 결과 정리: `reports/day06/challenge/mini_challenge_result.md`
+
+### Final Selected Config
+
+- 본수업: Baseline 그대로 (Sequence Steps 30, Feature 1140, n_estimators 300, max_depth null, random_state 42)
+- 3팀: 45-D (Feature 1,350, 나머지 Baseline과 같음) — Test 전에 정한 기준(Validation Macro F1 최고)으로 선택
+
+### Final Test
+
+- 본수업 Subject S03: Accuracy 1.0000 / Macro F1 1.0000 (6 / 6)
+- 3팀 Subject S05: Accuracy 0.7647 / Macro F1 0.7529 (26 / 34), 참고 38-D Baseline 0.6765 / 0.6630
+
+Test 결과는 최종 확인에만 사용하고
+Test 결과를 이용하여 다시 모델 조건을 수정하지 않았습니다.
+
+### Main Files
+
+- configs/day06_baseline.json
+- src/sequence_utils.py
+- scripts/33_check_day06_inputs.py
+- scripts/34_build_sequence_dataset.py
+- scripts/35_train_rf_baseline.py
+- scripts/36_evaluate_validation.py
+- scripts/37_analyze_misclassified.py
+- scripts/38_compare_static_vs_sequence.py
+- scripts/39_compare_feature_sets.py
+- scripts/40_evaluate_test.py
+- scripts/team03/team_day06_baseline.py (3팀 Mini Challenge)
+- reports/day06/day06_summary.md
+- reports/day06/challenge/mini_challenge_result.md
+
+교재 코드 9개와 설정 파일은 교재 원본 그대로 사용했다.
+
+### Next
+
+Day 07에서는 실시간 Frame을 Sliding Window로 묶어
+실시간 Action Recognition으로 확장합니다.
+
+### Important Note
+
+현재 데이터는
+3 Subjects × 6 Actions × 1 Take의
+작은 교육용 Dataset입니다.
+
+이번 실습의 목적은 높은 성능을 증명하는 것이 아니라
+Pose Dataset을 Action Recognition 학습과 평가까지 연결하는
+전체 Pipeline을 이해하는 것입니다.

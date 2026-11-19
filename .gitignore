@@ -29,12 +29,18 @@ data/
 *.pth
 *.onnx
 *.engine
+*.joblib
 
 # Training outputs
 runs/
 weights/
 checkpoints/
-artifacts/
+# artifacts/ 아래는 모두 제외하되, 6일차 재현성 정보(JSON)만 기록 (교재 52번)
+artifacts/*
+!artifacts/day06/
+artifacts/day06/*
+!artifacts/day06/rf_feature_columns.json
+!artifacts/day06/rf_training_info.json
 
 # OS files
 .DS_Store
@@ -60,6 +66,15 @@ reports/day03/challenge/tables/*.csv
 # Generated Day05 CSV reports
 reports/day05/tables/*.csv
 
+# Generated Day06 results (교재 52번)
+reports/day06/tables/*.csv
+reports/day06/metrics/*.csv
+reports/day06/misclassified/*.csv
+reports/day06/experiments/*.csv
+reports/day06/confusion/*.png
+
 # Team3 170 videos (generated tables and review images)
 reports/team_projects/team03/tables/*.csv
 reports/team_projects/team03/review_sheets/*.jpg
+reports/team_projects/team03/day06/**/*.csv
+reports/team_projects/team03/day06/**/*.png
