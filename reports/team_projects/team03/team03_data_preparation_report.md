@@ -146,6 +146,14 @@
 - 5일차 Dataset QA·Split에서 확인할 사항: 완료 (Approved 170, Leakage OK)
 - 6일차 모델 학습 전 준비할 사항: 교재 38-D와 3팀 45-D를 같은 Split(S01~S03 / S04 / S05)으로 비교, 정면·측면을 따로 쓸지 함께 쓸지 결정
 
+### 6일차 Baseline 결과 (이 Dataset으로 학습·평가)
+
+- Random Forest (교재 설정), 30 Step Sequence, Train S01~S03 / Validation S04 / Test S05
+- Validation: 38-D 0.7353 / Macro F1 0.7373 → 45-D 0.7647 / 0.7725
+- Test (S05, 처음 보는 사람): 45-D **0.7647 / Macro F1 0.7529** (38-D 0.6765 / 0.6630)
+- 남은 혼동: 물체 없이 팔로 하는 동작끼리(밀치기 ↔ 흔들기, 내려치기·던지기·휘두르기) → 물체 위치(ROI) 정보가 필요하다는 근거
+- 자세한 내용: `reports/day06/challenge/mini_challenge_result.md`
+
 ## 8. 완료 체크리스트
 
 - [x] 170개 MP4의 고유 `clip_id`가 있고 Label·Subject·Take(방향)를 확인했다.
