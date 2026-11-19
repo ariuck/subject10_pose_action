@@ -2,6 +2,8 @@
 
 교과 10 자세추정 이론·실습 프로젝트입니다.
 
+- 진행하면서 겪은 문제와 해결 과정, 개선 결과: [`reports/improvement_log.md`](reports/improvement_log.md)
+
 ## Day 01 - Pose 전체 구조·개발환경·실제 데이터 입력
 
 ### 사용한 입력
