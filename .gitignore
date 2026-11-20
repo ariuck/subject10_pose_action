@@ -87,3 +87,16 @@ reports/team_projects/team03/tables/*.csv
 reports/team_projects/team03/review_sheets/*.jpg
 reports/team_projects/team03/day06/**/*.csv
 reports/team_projects/team03/day06/**/*.png
+
+# Day07 generated runtime outputs (교재 57번)
+reports/day07/tables/*.csv
+reports/day07/saved_video/
+reports/day07/ip_webcam/*.csv
+reports/day07/realtime_run_summary.csv
+
+# Day07 Mini Challenge generated outputs
+data/day07/challenge/team*/videos/*.mp4
+reports/day07/challenge/team*/saved_video/
+reports/day07/challenge/team*/ip_webcam/*.csv
+reports/day07/challenge/team*/saved_video_comparison.csv
+reports/day07/challenge/team*/ip_webcam_summary.csv
