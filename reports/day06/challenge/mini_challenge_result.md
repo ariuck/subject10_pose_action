@@ -30,7 +30,10 @@
 - Train Clips: 102
 - Feature Count: 1,140
 - Classes: 17
-- 생성된 Model: `artifacts/team03/day06/rf_team03_baseline.joblib` (Git 제외)
+- 생성된 Model: 교재 35번과 같은 세 파일을 조건별 폴더에 저장 (joblib은 Git 제외, JSON 두 개는 기록)
+  - 38-D Baseline: `artifacts/team03/day06/baseline_38d/` — `rf_action_baseline.joblib`, `rf_feature_columns.json`, `rf_training_info.json`
+  - 45-D 최종 조건: `artifacts/team03/day06/team_45d/` — 같은 세 파일
+  - 저장: `python scripts/team03/team_day06_baseline.py save --condition <조건>` (Train S01~S03으로만 학습)
 - 설정: n_estimators 300, max_depth null, random_state 42, class_weight balanced (교재와 동일)
 
 ## 4. Baseline Validation

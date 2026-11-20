@@ -15,6 +15,7 @@ Random Forest + class_weight="balanced")을 그대로 불러와 3팀 데이터�
 사용 예:
     python scripts/team03/team_day06_baseline.py validate   # Baseline + 한 가지 조건 비교 실험 (Validation만)
     python scripts/team03/team_day06_baseline.py test --condition baseline_38d   # 마지막에 Test 1회
+    python scripts/team03/team_day06_baseline.py save --condition team_45d       # 모델 3개 파일 저장 (7일차용)
 """
 import argparse
 import json
@@ -160,6 +161,56 @@ def evaluate(model, cols, data: pd.DataFrame, name: str, split_label: str, out_d
             "report": report, "pred": pred}
 
 
+def save_artifacts(model, cols, train: pd.DataFrame, config: dict, name: str) -> Path:
+    """교재 35번과 같은 세 파일(모델 · Feature 순서 · 학습 정보)을 조건별 폴더에 저장한다.
+
+    artifacts/team03/day06/<조건>/rf_action_baseline.joblib
+                                 /rf_feature_columns.json
+                                 /rf_training_info.json
+    """
+    cond = CONDITIONS[name]
+    out = ARTIFACT_DIR / name
+    out.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, out / "rf_action_baseline.joblib")
+    (out / "rf_feature_columns.json").write_text(json.dumps(cols, indent=2), encoding="utf-8")
+    team_feats = (TEAM_FEATURES if cond.get("team_features") is True else list(cond.get("team_features") or []))
+    info = {
+        # 교재 rf_training_info.json과 같은 항목
+        "train_clips": int(len(train)),
+        "subjects": sorted(train["subject"].unique().tolist()),
+        "classes": [str(c) for c in model.classes_],
+        "feature_count": len(cols),
+        "sequence_steps": int(config["sequence_steps"]),
+        "min_valid_frames": int(config["min_valid_frames"]),
+        "n_estimators": int(config["n_estimators"]),
+        "max_depth": config["max_depth"],
+        "random_state": int(config["random_state"]),
+        # 3팀에서 추가로 기록하는 항목
+        "condition": name,
+        "frame_feature_count": len(cols) // int(config["sequence_steps"]),
+        "team_features": team_feats,
+        "class_weight": "balanced",
+        "views": sorted(train["take"].unique().tolist()),
+        "action_classes_csv": "configs/team03_action_classes.csv",
+    }
+    (out / "rf_training_info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False), encoding="utf-8")
+    return out
+
+
+def run_save(condition: str) -> None:
+    """Train(S01~S03)으로만 학습한 모델을 저장하고, Validation(S04) 점수가 실험 때와 같은지 확인한다."""
+    config = load_config()
+    cond = CONDITIONS[condition]
+    train = build_split("train", cond, config)
+    val = build_split("val", cond, config)
+    model, cols = train_model(train, config)
+    out = save_artifacts(model, cols, train, config, condition)
+    res = evaluate(model, cols, val, condition, "validation", REPORT_DIR / "validation")
+    print(f"[SAVED] {out.relative_to(ROOT)}/ (joblib · feature_columns · training_info)")
+    print(f"Train clips={len(train)}  classes={len(model.classes_)}  features={len(cols)}")
+    print(f"Validation check: acc={res['accuracy']:.4f}  macro_f1={res['macro_f1']:.4f}  wrong={res['wrong']}")
+
+
 def run_validate() -> None:
     config = load_config()
     out = REPORT_DIR / "validation"
@@ -170,9 +221,7 @@ def run_validate() -> None:
         model, cols = train_model(train, config)
         res = evaluate(model, cols, val, name, "validation", out)
         if name == "baseline_38d":
-            ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
-            joblib.dump(model, ARTIFACT_DIR / "rf_team03_baseline.joblib")
-            (ARTIFACT_DIR / "rf_team03_feature_columns.json").write_text(json.dumps(cols), encoding="utf-8")
+            save_artifacts(model, cols, train, config, name)
             print(f"Train clips   : {len(train)} ({sorted(train.subject.unique())})")
             print(f"Feature count : {len(cols)}")
             print(f"Classes       : {len(model.classes_)}")
@@ -207,11 +256,13 @@ def run_test(condition: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["validate", "test"])
+    parser.add_argument("mode", choices=["validate", "test", "save"])
     parser.add_argument("--condition", default="baseline_38d", choices=list(CONDITIONS))
     args = parser.parse_args()
     if args.mode == "validate":
         run_validate()
+    elif args.mode == "save":
+        run_save(args.condition)
     else:
         run_test(args.condition)
 

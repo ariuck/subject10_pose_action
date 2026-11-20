@@ -41,6 +41,15 @@ artifacts/*
 artifacts/day06/*
 !artifacts/day06/rf_feature_columns.json
 !artifacts/day06/rf_training_info.json
+# 3팀 모델도 같은 방식: joblib은 제외, Feature 순서·학습 정보 JSON만 기록
+!artifacts/team03/
+artifacts/team03/*
+!artifacts/team03/day06/
+artifacts/team03/day06/*
+!artifacts/team03/day06/*/
+artifacts/team03/day06/*/*
+!artifacts/team03/day06/*/rf_feature_columns.json
+!artifacts/team03/day06/*/rf_training_info.json
 
 # OS files
 .DS_Store

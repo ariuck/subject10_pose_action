@@ -1,0 +1,50 @@
+{
+  "train_clips": 102,
+  "subjects": [
+    "S01",
+    "S02",
+    "S03"
+  ],
+  "classes": [
+    "body_bump",
+    "faint_back",
+    "freezer_kick",
+    "kiosk_strike",
+    "kneel_claw_machine",
+    "lie_back_side",
+    "lie_prone_phone",
+    "push_two_hands",
+    "shake_claw_machine",
+    "sit_on_chair_phone",
+    "sit_on_mat",
+    "sleep_against_wall",
+    "swing_strike",
+    "table_strike",
+    "throw_object",
+    "trip_fall",
+    "vomit"
+  ],
+  "feature_count": 1350,
+  "sequence_steps": 30,
+  "min_valid_frames": 10,
+  "n_estimators": 300,
+  "max_depth": null,
+  "random_state": 42,
+  "condition": "team_45d",
+  "frame_feature_count": 45,
+  "team_features": [
+    "torso_tilt_deg",
+    "bbox_aspect_ratio",
+    "hip_floor_height",
+    "left_ankle_speed",
+    "right_ankle_speed",
+    "left_wrist_speed",
+    "right_wrist_speed"
+  ],
+  "class_weight": "balanced",
+  "views": [
+    "T01",
+    "T02"
+  ],
+  "action_classes_csv": "configs/team03_action_classes.csv"
+}
