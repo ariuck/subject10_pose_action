@@ -5,13 +5,34 @@ YOLO Pose로 찾은 관절을 Feature로 바꾸고, 시간 변화를 Random Fore
 
 - 진행하면서 겪은 문제와 해결 과정, 개선 결과: [`reports/improvement_log.md`](reports/improvement_log.md)
 
+## 핵심 결과
+
+| 항목 | 결과 |
+|---|---|
+| 데이터 | 3팀 영상 170개, 70,159 Frame 중 Pose 성공 99.7%, 사람·자동 QA로 170개 모두 승인 |
+| 동작 분류 (17개 이상행동) | 처음 보는 사람(S05)으로 Test: **Accuracy 0.7647 / Macro F1 0.7529** (기본 38-D 0.6765 → 3팀 Feature 추가 45-D) |
+| Feature 설계 | 측면 눕기에서 어깨 폭 정규화 차이 8.199 → 상체 길이 정규화 0.438, 상체 기울기·골반 높이·속도 등 7개 추가 |
+| 실시간 인식 | 처음 보는 사람 영상에서 Raw 예측 23 / 25 정답, Threshold 조정으로 Stable 일치 비율 0 → 0.64 |
+
+## 사용 기술
+
+| 분야 | 사용한 것 |
+|---|---|
+| Pose 추정 | YOLO11n-pose (Ultralytics 8.4), COCO 17 Keypoint, 입력 640, Person Confidence 0.25 / Keypoint Confidence 0.50 |
+| 영상 처리 | OpenCV 5.0 (MP4 Frame 처리, 스마트폰 카메라 MJPEG Stream) |
+| Feature | Hip Center + 어깨 폭 / 상체 길이 정규화, 관절각도, 38-D Frame Feature, 3팀 45-D (상체 기울기, BBox 비율, 골반-바닥 높이, 손목·발목 속도) |
+| Sequence | 30 Step Resampling (1,140 / 1,350 Feature) |
+| 모델·평가 | scikit-learn 1.9 Random Forest (300 Tree, class_weight balanced), Subject-wise Split, Accuracy · Macro F1 · Confusion Matrix |
+| 실시간 | Timed Sliding Window, Confidence Threshold (UNKNOWN), Prediction Stabilization (다수결) |
+| 데이터 관리 | 자동 QA + Human QA, Leakage check, 실명 대신 가명 ID |
+| 환경 | Python 3.12, PyTorch 2.15 + CUDA 13.2, RTX 3060, WSL2 Ubuntu, pandas · NumPy · Matplotlib |
+
 ## Day 01 - Pose 추론 환경
 
 ```text
 JPG / MP4 / Phone Camera → Frame → YOLO Pose → Person BBox → COCO 17 Keypoint → Skeleton
 ```
 
-- 환경: Python 3.12, PyTorch 2.15 + CUDA, RTX 3060
 - COCO8-Pose 이미지 8장과 Pose Demo MP4(30 FPS, 60 Frame)에서 사람과 17개 관절을 찾았다.
 - 사람이 겹친 이미지에서 차이가 컸다.
   - 049번: 잘 찾음
