@@ -977,3 +977,124 @@ Day 07에서는 실시간 Frame을 Sliding Window로 묶어
 이번 실습의 목적은 높은 성능을 증명하는 것이 아니라
 Pose Dataset을 Action Recognition 학습과 평가까지 연결하는
 전체 Pipeline을 이해하는 것입니다.
+
+## Day 07 - Sliding Window & IP Webcam Realtime Action
+
+### Goal
+
+Day06에서 학습한 Random Forest Action Model을
+Saved MP4와 IP Webcam의 연속 Frame에 연결하여
+Realtime Action Recognition Pipeline을 구성했습니다.
+
+### Input
+
+- Day06 Random Forest Action Model
+- S02 Validation MP4
+- IP Webcam Stream (스마트폰 DroidCam, 1280×720)
+- Mini Challenge: 3팀 17개 동작 모델 + 학습에 쓰지 않은 S05 영상 (새 촬영본은 녹화 예정)
+
+> Mini Challenge 영상은 새로운 Train Dataset이 아니라
+> 학습된 모델을 확인하기 위한 Runtime 입력입니다.
+
+### Action Classes
+
+- bend_return
+- leg_raise_lower
+- walk_turn_walk
+- drink_return
+- sit_stand
+- wave
+
+### Runtime Pipeline
+
+```text
+Saved MP4 / IP Webcam
+        ↓
+YOLO Pose
+        ↓
+38-D Frame Feature
+        ↓
+Timed Sliding Window (5초, 80% 이상 차면 예측)
+        ↓
+Day06 Final Sequence Steps(30)로 Resampling
+        ↓
+Random Forest (0.25초마다)
+        ↓
+Raw Prediction
+        ↓
+Confidence Threshold (0.55)
+        ↓
+Action / UNKNOWN
+        ↓
+Prediction Stabilization (최근 5개 중 3표)
+        ↓
+Stable Action
+```
+
+### Main Files
+
+```text
+configs/day07_realtime.json
+
+src/realtime_utils.py
+
+scripts/
+├── 41_check_day07_inputs.py
+├── 42_realtime_action_video.py
+├── 43_summarize_realtime_runs.py
+├── 44_ip_webcam_action_realtime.py
+├── 45_analyze_ip_webcam_log.py
+└── team03/
+    ├── team_day07_runtime.py   (3팀 모델로 42·44번 실행)
+    └── team_record_clip.py     (폰 Stream으로 Challenge 영상 녹화)
+```
+
+교재 코드 5개와 설정 파일은 교재 원본 그대로 사용했다.
+
+### 주요 결과
+
+| 실험 (교재 모델, S02 저장영상) | Prediction | UNKNOWN 비율 | 평균 Confidence |
+|---|---:|---:|---:|
+| wave, Window 5초 | 0 | - | - |
+| wave, Window 3초 / 2초 | 5 / 8 | 1.0 / 1.0 | 0.249 / 0.260 |
+| walk_turn_walk, 기본 | 21 | 1.0 | 0.231 |
+| walk_turn_walk, Threshold 0.40 / 0.70 | 21 / 21 | 1.0 / 1.0 | 0.231 |
+| walk_turn_walk, Buffer 3 / 7 | 21 / 21 | 1.0 / 1.0 | 0.231 |
+
+- Pipeline은 정상으로 동작했다. 다만 교재 모델의 Confidence가 0.2대여서 기본 Threshold에서는 모두 UNKNOWN이었다.
+- 첫 예측은 항상 4초에 나왔다. 5초 Window의 80%를 채워야 하기 때문이다.
+- 자세한 결과: [`runtime_comparison.md`](reports/day07/runtime_comparison.md), [`fps_test.md`](reports/day07/fps_test.md), [`day07_summary.md`](reports/day07/day07_summary.md)
+
+### Mini Challenge - 3팀 A007 매트 위에 앉기
+
+- 모델: 3팀 38-D (17개 동작, Train S01~S03)
+- 입력: 학습에 쓰지 않은 S05 `S05_A007_T01.mp4` (10.2초)
+- 바꾼 값: Confidence Threshold 0.55 → 0.20
+
+| 실행 | UNKNOWN 비율 | Stable 일치 비율 | Raw 정답 |
+|---|---:|---:|---:|
+| Baseline 0.55 | 1.00 | 0.00 | 23 / 25 |
+| Experiment 0.20 | 0.32 | 0.64 | 23 / 25 |
+
+- 17개 Class 모델은 Confidence가 원래 낮다(0.16~0.33). 그래서 교재 기준 0.55로는 맞는 예측도 전부 보류됐다.
+- 0.20으로 낮추자 5.5~9.3초 구간이 Stable `sit_on_mat`이 됐다.
+- 자세한 결과: [`mini_challenge_summary.md`](reports/day07/challenge/team03/mini_challenge_summary.md)
+
+### 아직 못 한 것
+
+- IP Webcam으로 교재 6개 동작 실시간 테스트, 45번 Log 분석
+- Mini Challenge 새 촬영본(`S93_A007_T01.mp4`)과 같은 동작의 IP Webcam 실행
+
+### Key Learning
+
+- Window Seconds와 Sequence Steps는 다른 개념입니다.
+- 실시간 입력도 학습 때와 같은 38-D Feature를 사용합니다.
+- Confidence Threshold는 낮은 Prediction을 UNKNOWN으로 보류합니다. 기준값은 모델과 Class 수에 맞춰야 합니다.
+- Stabilization은 Label 흔들림을 줄이지만 반응을 늦출 수 있습니다.
+- Runtime Match 값은 정식 Test Accuracy가 아닙니다.
+- Processing FPS와 IP Webcam 네트워크 지연은 구분해서 해석합니다.
+
+### Next
+
+Day08에서는 Tracking을 추가하여
+Frame이 바뀌어도 같은 사람을 계속 추적하는 구조로 확장합니다.
