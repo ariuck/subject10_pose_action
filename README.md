@@ -241,6 +241,12 @@ Keypoint CSV → Frame Feature → Sequence Resampling (30 Step)
 
 Validation은 0.7353인데 Test는 0.6471이었다. 팀에서 사람 번호를 다시 정하기 전에는 같은 방법으로 Test가 0.7647이었다. **Test하는 사람이 누구냐에 따라 10%p 넘게 달라졌다.** 그래서 한 사람으로 낸 점수 하나를 성능으로 믿지 않고, 5명을 돌아가며 평가해 보려고 한다.
 
+**측면 좌우 반전 증강**: 측면 영상은 한쪽 방향에서만 찍혀서, Train 측면 51개를 Keypoint 단계에서 좌우로 뒤집어 학습에 더했다(x 좌표 반전 + 왼쪽·오른쪽 관절 교환).
+- 45-D는 Validation이 25 → 28개 정답(Macro F1 0.720 → 0.802)으로 올랐다.
+- Test는 22개 그대로였다. "몸통 박치기"로 몰리던 오답은 사라졌지만 다른 오답으로 옮겨 갔다.
+- 38-D는 오히려 20 → 18개로 떨어졌다.
+- Test에서 효과가 확인되지 않아 기본 모델은 바꾸지 않았다. 5명을 돌아가며 평가할 때 다시 비교할 후보로 남겼다 ([`augmentation_hflip.md`](reports/team_projects/team03/augmentation_hflip.md)).
+
 결과: `reports/day06/challenge/mini_challenge_result.md`, `reports/team_projects/team03/feature_expansion_log.md`
 
 ```text
