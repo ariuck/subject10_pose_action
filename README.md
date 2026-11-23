@@ -3,6 +3,10 @@
 YOLO Pose로 찾은 관절을 Feature로 바꾸고, 시간 변화를 Random Forest로 분류해서 동작을 인식하는 프로젝트입니다.
 수업 데이터(6개 동작)로 Pipeline을 만들고, 같은 Pipeline을 **3팀 무인 상점 이상행동 17개 동작**(5명 × 17동작 × 정면·측면 = 170개 영상)에 적용했습니다.
 
+- 역할
+  - 3팀 영상은 팀원 5명이 함께 촬영했습니다.
+  - 데이터 정리·QA, Feature 설계, 모델 학습·평가, 실시간 인식 연결은 개인 프로젝트로 직접 진행했습니다.
+
 - 진행하면서 겪은 문제와 해결 과정, 개선 결과: [`reports/improvement_log.md`](reports/improvement_log.md)
 
 ## 핵심 결과
@@ -261,6 +265,8 @@ Keypoint CSV → Frame Feature → Sequence Resampling (30 Step)
 | 동작 구간만 | 1,140 | 0.7941 | 0.7588 |
 | 정면만 / 측면만 | 1,140 | 0.6471 / 0.6471 | 0.5882 / 0.5529 |
 
+![조건별 · Feature 단계별 Validation Macro F1](docs/images/team03_validation_comparison.png)
+
 - 데이터가 늘어나자 수업 데이터와 반대로 나왔다. Sequence가 Static보다, 각도를 넣은 것이 좌표만 쓴 것보다 높았다.
 - 남은 혼동은 물체 없이 팔로 하는 동작끼리였다. (밀치기 ↔ 흔들기, 내려치기·던지기·휘두르기)
 - Feature를 한 단계씩 늘려 본 Validation Macro F1
@@ -281,10 +287,18 @@ Keypoint CSV → Frame Feature → Sequence Resampling (30 Step)
   | 45-D (최종) | 0.7647 | 0.7529 | 26 / 34 |
   | 38-D Baseline | 0.6765 | 0.6630 | - |
 
+<img src="docs/images/team03_test_confusion_45d.png" alt="3팀 45-D 모델 Test Confusion Matrix" width="640">
+
+- 17개 중 10개 동작은 Test 2개를 모두 맞혔다.
+- 틀린 8개는 대부분 비슷한 움직임끼리였다.
+  - 밀치기 ↔ 흔들기: 3개
+  - 던지기 → 내려치기, 내려치기 → 휘두르기, 앞차기 → 던지기
+  - 옆으로 눕기 → 뒤로 기절하기, 무릎 꿇고 인형빼기 → 매트 위에 앉기
 - 결과: `reports/day06/challenge/mini_challenge_result.md`, `reports/team_projects/team03/feature_expansion_log.md`
 
 ```text
 scripts/team03/team_day06_baseline.py   조건 비교 실험 · 모델과 학습 정보 저장
+scripts/team03/team_readme_figures.py   README 결과 그림 생성
 ```
 
 ## Day 07 - Sliding Window Realtime Action Recognition
@@ -335,3 +349,15 @@ Saved MP4 / Phone Camera Stream
 scripts/team03/team_day07_runtime.py   3팀 모델 · 17개 동작 이름표로 저장영상 / 카메라 실시간 실행
 scripts/team03/team_record_clip.py     폰 Stream으로 평가용 영상 녹화
 ```
+
+## 한계와 개선 방향
+
+| 한계 | 확인한 근거 | 개선 방향 |
+|---|---|---|
+| 물체와 닿는 팔 동작끼리 혼동 | Test 오답 8개 중 밀치기 ↔ 흔들기 3개, 던지기·내려치기·휘두르기끼리 2개 | 키오스크·뽑기기계 같은 물체 위치(ROI 또는 객체 검출)와 손-물체 거리 Feature |
+| 정면 카메라에서 누운 자세가 약함 | 측면은 BBox 비율·골반 높이로 잘 구분됐지만 정면은 카메라 쪽으로 누워 구분이 약함 | 카메라 높이·각도 조정, 정면·측면 결과 결합 |
+| "정상 vs 이상"을 판단할 수 없음 | 데이터가 이상행동 17개뿐 | 걷기·물건 고르기 같은 정상행동 영상 추가 |
+| 평가 인원이 적음 | Validation·Test가 각각 한 사람(34개) | 사람·Take 추가 |
+| 실시간 Confidence 기준 | 17개 Class라 Confidence가 0.2~0.3대 → 기본 0.55에서는 맞는 예측도 전부 보류 | 동작 수에 맞춘 기준값 조정, 혼동이 많은 동작으로 추가 검증 |
+| 짧은 동작을 놓침 | 3팀 영상 34개 중 15개가 5초 미만, Window 5초는 4초를 채워야 예측 | Window 조정, 동작 시작·끝 구간 검출 |
+| 한 사람만 가정 | 가장 확실한 사람 한 명만 분류 | 여러 사람을 계속 따라가는 Tracking 연결 |

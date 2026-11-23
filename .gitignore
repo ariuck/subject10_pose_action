@@ -51,6 +51,9 @@ artifacts/team03/day06/*/*
 !artifacts/team03/day06/*/rf_feature_columns.json
 !artifacts/team03/day06/*/rf_training_info.json
 
+# README에 넣는 결과 그림만 기록 (사람 얼굴이 없는 그래프·표 이미지)
+!docs/images/*.png
+
 # OS files
 .DS_Store
 Thumbs.db
