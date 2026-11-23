@@ -81,7 +81,7 @@ Action Recognition Pipeline을 배우기에는 적절하지만
 
 ## 10. Mini Challenge
 
-- 선택한 Action: 3팀 A016 `faint_back` (뒤로 기절하기), 측면
+- 선택한 Action: 3팀 A016 `fall_backward` (뒤로 넘어지기), 측면
 - Approved Clip 수: 3
 - CHECK Clip: 없음 (3개 모두 AUTO_PASS)
 - Human QA 결과: 3개 PASS (교재 28번 코드가 전체 입력을 요구해 직접 확인 후 기록)

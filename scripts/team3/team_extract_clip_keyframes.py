@@ -248,7 +248,7 @@ def read_frame_at(
 
     # [추가] 휴대폰으로 촬영한 MP4는 CAP_PROP_FRAME_COUNT가
     # 실제로 읽을 수 있는 Frame 수보다 조금 크게 기록되는 경우가 있습니다.
-    # (예: challenge_faint_back.mp4 → 기록 810, 실제 808)
+    # (예: challenge_fall_backward.mp4 → 기록 810, 실제 808)
     # 이때 end Frame 번호가 실제 영상 끝을 넘으므로,
     # 이미 읽은 Frame이 있다면 실제 마지막 Frame을 대신 사용합니다.
     read_count = 0

@@ -124,12 +124,12 @@ Sequence가 필요하다.
 - 데이터: 3팀 17개 동작 × 정면·측면 = 영상 36개 (총 18,950 Frame)
 - Pose / Feature 품질: Pose 성공 18,742 / 18,950 (98.9%). 32개 영상은 pose_ok_ratio = 1.0. 실패는 바닥에서 몸을 말거나 엎드린 장면뿐이었다.
 - 정면 영상(평균 Confidence 중앙값 0.937)이 측면(0.829)보다 품질이 좋았다. 측면은 어깨 폭 정규화가 불안정해 인접 Row 변화량이 크게 부풀었다(중앙값 4.475).
-- Action 1: `faint_back` (16 뒤로 기절하기, 측면, 808 Frame)
-- Action 2: `trip_fall` (17 앞으로 넘어지기, 측면, 374 Frame)
+- Action 1: `fall_backward` (16 뒤로 넘어지기, 측면, 808 Frame)
+- Action 2: `fall_forward` (17 앞으로 넘어지기, 측면, 374 Frame)
 - 시간 변화가 가장 잘 보였던 Feature:
-  - faint_back: Hip Center y (1초 안에 약 190px 하강 후 8초 이상 유지), Knee Angle
-  - trip_fall: Hip Center x (1초에 약 380px 앞으로 이동), Knee Angle (넘어진 뒤 70~100°)
-- 두 Action에서 가장 크게 달랐던 점: 기절은 골반이 바닥까지 내려가 오래 머물렀고, 넘어지기는 골반이 앞으로 빠르게 이동한 뒤 높이는 약 40px만 내려가 손·무릎으로 버텼다.
+  - fall_backward: Hip Center y (1초 안에 약 190px 하강 후 8초 이상 유지), Knee Angle
+  - fall_forward: Hip Center x (1초에 약 380px 앞으로 이동), Knee Angle (넘어진 뒤 70~100°)
+- 두 Action에서 가장 크게 달랐던 점: 뒤로 넘어지기는 골반이 바닥까지 내려가 오래 머물렀고, 앞으로 넘어지기는 골반이 앞으로 빠르게 이동한 뒤 높이는 약 40px만 내려가 손·무릎으로 버텼다.
 - 휴대폰 영상은 교재 21번 원본이 End Frame에서 멈춰, Mini Challenge에서만 이를 처리한 사본으로 대표 Frame을 만들었다.
 - 자세한 내용: `reports/day04/challenge/action_sequence_result.md`
 

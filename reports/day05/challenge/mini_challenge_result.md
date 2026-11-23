@@ -3,7 +3,7 @@
 ## 1. 선택한 Action
 
 - Action ID: A016 (3팀 동작 정의표 `configs/team03_action_classes.csv`)
-- Action Label: `faint_back` (뒤로 기절하기 — 서 있다가 뒤로 쓰러져 누운 채 움직이지 않음)
+- Action Label: `fall_backward` (뒤로 넘어지기 — 서 있다가 뒤로 쓰러져 누운 채 움직이지 않음)
 - 우리 팀(3팀 무인 상점 이상행동) 17개 동작 중 하나를 골랐다. 모션캡처 촬영 때 팀원들이 같은 동작을 같은 장소·같은 측면 카메라로 찍은 영상이다.
 
 ## 2. 데이터

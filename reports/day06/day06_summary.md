@@ -78,21 +78,22 @@ Validation이 6개라 Clip 하나가 Accuracy를 0.1667씩 바꾼다.
 ## 7. Mini Challenge
 
 우리 팀(3팀) Dataset 170개(Train S01~S03 102개 / Validation S04 34개 / Test S05 34개, 17개 동작)로 진행했다.
+팀에서 사람 ID와 동작 이름을 통일한 뒤(2026-11-23) 다시 학습한 결과다.
 
 - 변경한 조건: Frame Feature 38-D → 3팀 45-D (상체 기울기, BBox 비율, 골반-바닥 높이, 양발목·양손목 속도)
 - 변경 전: 1,140 Feature
 - 변경 후: 1,350 Feature
 - 실험 전 가설: 눕기·앉기·차기는 몸 기울기·높이·속도 정보가 도움이 될 것이다
 
-- Baseline Accuracy: 0.7353
-- Baseline Macro F1: 0.7373
+- Baseline Accuracy: 0.6176
+- Baseline Macro F1: 0.6235
 
-- 변경 후 Accuracy: 0.7647
-- 변경 후 Macro F1: 0.7725
+- 변경 후 Accuracy: 0.7353
+- 변경 후 Macro F1: 0.7196
 
-- 예측이 바뀐 Clip: 6개 (의자에 앉아 폰보기 S04_A008_T01이 정답으로 바뀜, 나머지 5개는 팔 동작끼리 다른 오답)
-- 결과 해석: 자세형 동작에는 도움이 됐지만, 물체 없이 팔로 하는 동작(밀치기·흔들기·내려치기)끼리의 혼동은 남았다.
-- 같은 방식으로 동작 구간만 사용(0.7941 / 0.7588), 정면만(0.6471 / 0.5882), 측면만(0.6471 / 0.5529)도 비교했다. 3팀 데이터에서는 Static(0.5882)보다 Sequence가, 좌표만(0.6765)보다 각도 포함이 높았다.
+- 예측이 바뀐 Clip: 8개 (앞차기·잡고 흔들기 2개·몸통 박치기·샷건 5개가 정답으로 바뀜, 뒤로 넘어지기 1개가 새로 틀림)
+- 결과 해석: 속도 Feature가 빠르게 움직이는 동작을 나누는 데 도움이 됐지만, 물체 없이 팔로 하는 동작(밀치기·잡고 흔들기·샷건)끼리의 혼동은 남았다.
+- 같은 방식으로 동작 구간만 사용(0.7353 / 0.7098), 정면만(0.7647 / 0.7157), 측면만(0.5882 / 0.4902)도 비교했다. Static(0.6471 / 0.6020)은 Accuracy가 조금 높고 Macro F1은 낮아 Sequence와 차이가 거의 없었고, 좌표만(0.6176 / 0.5905)은 Macro F1이 낮았다.
 - 자세한 내용: `reports/day06/challenge/mini_challenge_result.md`
 
 ## 8. Final Selected Config
@@ -130,10 +131,11 @@ Validation이 6개라 Clip 하나가 Accuracy를 0.1667씩 바꾼다.
 
 - Test Subject: S05
 - Test Clips: 34
-- Accuracy: 0.7647 (참고: 38-D Baseline 0.6765)
-- Macro F1: 0.7529 (참고: 38-D Baseline 0.6630)
-- Correct Clips: 26
-- Misclassified Clips: 8 (밀치기 ↔ 흔들기 3개, 내려치기·던지기·휘두르기끼리 2개, 차기 → 던지기 1개, 눕기 → 기절 1개, 무릎꿇고 인형빼기 → 매트에 앉기 1개)
+- Accuracy: 0.6471 (참고: 38-D Baseline 0.5882)
+- Macro F1: 0.6020 (참고: 38-D Baseline 0.5652)
+- Correct Clips: 22
+- Misclassified Clips: 12 (휘두르기·밀치기·앞차기·샷건·잡고 흔들기 → 몸통 박치기 6개, 밀치기 → 샷건·잡고 흔들기 → 밀치기·두드리기 ↔ 던지기 4개, 옆으로 쓰러지기 → 바닥에 앉기 2개)
+- Validation(0.7353)보다 크게 낮았다. 이름 통일 전 Split에서는 같은 방법으로 Test 0.7647이었다. Test 사람에 따라 점수가 크게 흔들린다.
 
 Test 결과를 본 뒤 조건을 다시 변경하지 않은 이유:
 
@@ -150,7 +152,7 @@ Test 결과를 본 뒤 조건을 다시 변경하지 않은 이유:
 - Keypoint CSV → 38-D Frame Feature → 30 Step Resampling → 1,140개 숫자로 Clip 하나를 표현하고 Random Forest로 분류했다.
 - Train으로 학습, Validation으로 조건 비교, Test는 마지막에 한 번만 사용한다.
 - 같은 실험도 데이터에 따라 결론이 달라진다 (교재 18개 vs 3팀 170개). 작은 Validation 결과를 일반화하지 않는다.
-- 3팀 데이터에서는 팀 Feature(45-D)가 새로운 사람(S05)에서도 성능을 올렸다.
+- 3팀 데이터에서는 팀 Feature(45-D)가 새로운 사람(S05)에서도 성능을 올렸다. 다만 Test 점수 자체는 누가 Test 사람이냐에 따라 10%p 넘게 달라져, 사람을 돌아가며 평가해야 한다.
 
 ## 12. 다음 수업
 
