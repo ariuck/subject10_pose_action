@@ -66,7 +66,7 @@ def main() -> None:
     module.DEFAULT_OUTPUT_DIR = OUTPUT_DIRS[mode]
 
     if mode == "video":
-        # 파일명 S93_A005_T01.mp4 → A005 → push_two_hands
+        # 파일명 S93_A005_T01.mp4 → A005 → push
         module.ACTION_MAP = actions
     else:
         module.KEY_TO_ACTION = {

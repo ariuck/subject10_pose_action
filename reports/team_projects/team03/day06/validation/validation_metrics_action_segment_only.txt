@@ -1,26 +1,26 @@
-validation Accuracy: 0.7941
-validation Macro F1: 0.7588
+validation Accuracy: 0.7353
+validation Macro F1: 0.7098
 
-                    precision    recall  f1-score   support
+                  precision    recall  f1-score   support
 
-         body_bump       1.00      1.00      1.00         2
-        faint_back       1.00      1.00      1.00         2
-      freezer_kick       0.50      1.00      0.67         2
-      kiosk_strike       1.00      0.50      0.67         2
-kneel_claw_machine       1.00      0.50      0.67         2
-     lie_back_side       1.00      1.00      1.00         2
-   lie_prone_phone       1.00      1.00      1.00         2
-    push_two_hands       0.00      0.00      0.00         2
-shake_claw_machine       0.50      0.50      0.50         2
-sit_on_chair_phone       0.00      0.00      0.00         2
-        sit_on_mat       1.00      1.00      1.00         2
-sleep_against_wall       1.00      1.00      1.00         2
-      swing_strike       1.00      1.00      1.00         2
-      table_strike       0.67      1.00      0.80         2
-      throw_object       1.00      1.00      1.00         2
-         trip_fall       0.67      1.00      0.80         2
-             vomit       0.67      1.00      0.80         2
+       body_slam       1.00      0.50      0.67         2
+crouch_take_item       0.50      0.50      0.50         2
+   fall_backward       0.67      1.00      0.80         2
+    fall_forward       0.50      0.50      0.50         2
+   fall_sideways       1.00      0.50      0.67         2
+      front_kick       1.00      0.50      0.67         2
+      grab_shake       1.00      0.50      0.67         2
+       kiosk_tap       1.00      1.00      1.00         2
+    lie_backward       1.00      0.50      0.67         2
+     lie_forward       1.00      1.00      1.00         2
+            push       0.67      1.00      0.80         2
+         shotgun       0.00      0.00      0.00         2
+       sit_floor       1.00      1.00      1.00         2
+   sit_on_object       0.67      1.00      0.80         2
+           swing       0.50      1.00      0.67         2
+  throw_one_hand       1.00      1.00      1.00         2
+           vomit       0.50      1.00      0.67         2
 
-          accuracy                           0.79        34
-         macro avg       0.76      0.79      0.76        34
-      weighted avg       0.76      0.79      0.76        34
+        accuracy                           0.74        34
+       macro avg       0.76      0.74      0.71        34
+    weighted avg       0.76      0.74      0.71        34
