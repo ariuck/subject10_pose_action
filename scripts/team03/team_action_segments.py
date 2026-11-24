@@ -85,6 +85,46 @@ def find_segment(m: np.ndarray, fps: float, n: int) -> dict:
             "motion_p5": p5, "motion_p95": p95, "threshold": thr}
 
 
+def find_main_segment(m: np.ndarray, fps: float, n: int, merge_gap_sec: float) -> dict:
+    """가장 크게 움직인 덩어리 하나만 고른다 (자율 프로젝트 카메라 녹화용으로 추가).
+
+    find_segment는 '처음 넘은 곳 ~ 마지막 넘은 곳'이라, 카메라 8초 안에 걸어 들어오기·발차기 여러 번이 섞이면
+    전부 한 구간이 된다. 여기서는
+      1. 기준선을 넘은 구간들 중 사이 간격이 merge_gap_sec 이하인 것끼리 한 덩어리로 묶고
+         (눕기처럼 중간에 가만히 있는 동작이 끊기지 않게)
+      2. 기준선 위로 올라온 넓이(움직임 합)가 가장 큰 덩어리를 고른 뒤 앞뒤 0.2초 여유를 붙인다.
+    merge_gap_sec = inf 이면 find_segment와 같은 결과다.
+    """
+    p5, p95 = np.nanpercentile(m, [5, 95])
+    thr = p5 + THRESH_FRAC * (p95 - p5)
+    mm = np.nan_to_num(m, nan=0.0)
+    above = mm > thr
+    min_len = max(1, round(MIN_ACTIVE_SEC * fps))
+    runs, start = [], None
+    for i, a in enumerate(np.append(above, False)):
+        if a and start is None:
+            start = i
+        elif not a and start is not None:
+            if i - start >= min_len:
+                runs.append([start, i - 1])
+            start = None
+    if not runs:
+        s_idx, e_idx = 0, n - 1
+    else:
+        gap = merge_gap_sec * fps
+        merged = [runs[0]]
+        for s, e in runs[1:]:
+            if s - merged[-1][1] - 1 <= gap:
+                merged[-1][1] = e
+            else:
+                merged.append([s, e])
+        areas = [float(np.clip(mm[s:e + 1] - thr, 0, None).sum()) for s, e in merged]
+        s_idx, e_idx = merged[int(np.argmax(areas))]
+    pad = round(PAD_SEC * fps)
+    return {"start_idx": max(0, s_idx - pad), "end_idx": min(n - 1, e_idx + pad),
+            "motion_p5": p5, "motion_p95": p95, "threshold": thr}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest-path", default=str(DEFAULT_MANIFEST))
