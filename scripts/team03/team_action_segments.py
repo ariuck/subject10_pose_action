@@ -85,7 +85,7 @@ def find_segment(m: np.ndarray, fps: float, n: int) -> dict:
             "motion_p5": p5, "motion_p95": p95, "threshold": thr}
 
 
-def find_main_segment(m: np.ndarray, fps: float, n: int, merge_gap_sec: float) -> dict:
+def find_main_segment(m: np.ndarray, fps: float, n: int, merge_gap_sec: float, floor: float = 0.0) -> dict:
     """가장 크게 움직인 덩어리 하나만 고른다 (자율 프로젝트 카메라 녹화용으로 추가).
 
     find_segment는 '처음 넘은 곳 ~ 마지막 넘은 곳'이라, 카메라 8초 안에 걸어 들어오기·발차기 여러 번이 섞이면
@@ -94,9 +94,13 @@ def find_main_segment(m: np.ndarray, fps: float, n: int, merge_gap_sec: float) -
          (눕기처럼 중간에 가만히 있는 동작이 끊기지 않게)
       2. 기준선 위로 올라온 넓이(움직임 합)가 가장 큰 덩어리를 고른 뒤 앞뒤 0.2초 여유를 붙인다.
     merge_gap_sec = inf 이면 find_segment와 같은 결과다.
+
+    floor: 기준선 최소값. 기준선은 영상마다 상대적으로 정해져서, 서 있는 시간이 긴 카메라 영상에서는
+    서 있을 때 흔들림까지 동작으로 잡혔다. 기준선이 floor보다 낮으면 floor를 쓴다 (0이면 예전과 같음).
+    floor를 넘는 움직임이 하나도 없으면 영상 전체를 쓴다 (예전 규칙에서 움직임이 없을 때와 같음).
     """
     p5, p95 = np.nanpercentile(m, [5, 95])
-    thr = p5 + THRESH_FRAC * (p95 - p5)
+    thr = max(p5 + THRESH_FRAC * (p95 - p5), floor)
     mm = np.nan_to_num(m, nan=0.0)
     above = mm > thr
     min_len = max(1, round(MIN_ACTIVE_SEC * fps))

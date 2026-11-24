@@ -26,8 +26,35 @@ FOLDER = "team_45d_3view_hflip_all5"
 tb.CONDITIONS["team_45d_segment"] = {"team_features": True, "segment_only": True}
 
 
+def train_with_floor(floor: float) -> None:
+    """동작 구간 기준선 최소값(floor)을 둔 서비스용 모델 (team_loso_segment_floor.py에서 0.4가 정확도 유지)."""
+    import json
+    import math  # noqa: F401
+    from team_loso_segment_floor import rows_for_floor
+    from team_loso_segment_v2 import load_clips
+
+    config = tb.load_config()
+    steps, min_valid = int(config["sequence_steps"]), int(config["min_valid_frames"])
+    master = pd.concat([pd.read_csv(tb.SPLIT_DIR / f"{s}.csv") for s in ("train", "val", "test")], ignore_index=True)
+    data, _ = rows_for_floor(load_clips(master, tb.SEQ_DIR), floor, steps, min_valid)
+    aug, _ = rows_for_floor(load_clips(pd.read_csv(AUG / "manifests" / "hflip_manifest.csv"), AUG / "sequences"),
+                            floor, steps, min_valid)
+    train = pd.concat([data, aug], ignore_index=True)
+    model, cols = tb.train_model(train, config)
+    folder = f"team_45d_segment_floor{floor}_3view_hflip_all5"
+    path = save_model(model, cols, train, config, "team_45d_segment", len(aug), folder=folder)
+    info = json.loads((path / "rf_training_info.json").read_text(encoding="utf-8"))
+    info["segment_floor"] = floor
+    (path / "rf_training_info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Train clips : {len(train)} (원본 {len(data)} + 측면 반전 {len(aug)}), segment_floor={floor}")
+    print(f"[SAVED] {path.relative_to(tb.ROOT)}")
+
+
 def main() -> None:
     global NAME, FOLDER
+    if "--floor" in sys.argv:
+        train_with_floor(float(sys.argv[sys.argv.index("--floor") + 1]))
+        return
     if "--segment" in sys.argv:
         NAME, FOLDER = "team_45d_segment", "team_45d_segment_3view_hflip_all5"
     config = tb.load_config()
