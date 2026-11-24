@@ -43,11 +43,25 @@ def joint_xy(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
     return xs, ys
 
 
-def motion_curve(df: pd.DataFrame) -> tuple[np.ndarray, float, float]:
-    """Frame별 움직임 크기(상체 길이/초), fps, 상체 길이(px) 중앙값."""
+def smooth_positions(a: np.ndarray, win: int) -> np.ndarray:
+    """관절 좌표를 시간 방향 이동 중앙값으로 다듬는다 (안 보인 Frame NaN은 건너뜀). win<=1이면 그대로."""
+    if win <= 1:
+        return a
+    return pd.DataFrame(a).rolling(win, center=True, min_periods=1).median().to_numpy()
+
+
+def motion_curve(df: pd.DataFrame, pos_smooth_sec: float = 0.0) -> tuple[np.ndarray, float, float]:
+    """Frame별 움직임 크기(상체 길이/초), fps, 상체 길이(px) 중앙값.
+
+    pos_smooth_sec > 0 이면 움직임을 재기 전에 관절 좌표를 그 시간 폭의 이동 중앙값으로 다듬는다.
+    카메라(720p·DroidCam)는 가만히 서 있어도 관절 점이 떨려서 서 있는 시간이 동작 구간에 들어갔다.
+    (동작 구간을 정하는 데만 쓰고, 모델 입력 Feature는 다듬지 않는다)
+    """
     t = pd.to_numeric(df["time_sec"], errors="coerce").to_numpy(float)
     fps = 1.0 / float(np.median(np.diff(t)))
     xs, ys = joint_xy(df)
+    win = int(round(pos_smooth_sec * fps))
+    xs, ys = smooth_positions(xs, win), smooth_positions(ys, win)
     shoulder = np.stack([xs[:, 0] + xs[:, 1], ys[:, 0] + ys[:, 1]], 1) / 2
     hip = np.stack([xs[:, 6] + xs[:, 7], ys[:, 6] + ys[:, 7]], 1) / 2
     torso = float(np.nanmedian(np.linalg.norm(shoulder - hip, axis=1)))
