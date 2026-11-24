@@ -116,6 +116,19 @@
 - 서비스용 모델을 이 방식으로 다시 학습: `artifacts/team03/day06/team_45d_segment_3view_hflip_all5/` (`team_train_final_all.py --segment`). `rf_training_info.json`의 `segment_only: true`로 서비스가 같은 규칙으로 자른다.
 - 예상 성능은 처음 보는 사람 기준 약 0.78로 바뀐다. 다만 실제 카메라 영상에서는 예측이 거의 바뀌지 않아, 카메라 환경 데이터가 더 필요하다.
 
+## ⑦ 동작 구간 기준선 최소값 0.4 + 결정적인 순간 특징 (자율 프로젝트 중 추가)
+
+| 방법 | 평균 Accuracy | 가장 낮은 사람 | 판단 |
+|---|---:|---:|---|
+| ⑥ 구간 학습 (위) | 0.784 | 0.745 | |
+| + 기준선 최소값 0.4 | 0.784 | 0.745 | ✅ 정확도 같고 카메라 영상에서 나음 |
+| + 기준선 최소값 0.5 / 0.6 / 0.8 | 0.745 / 0.761 / 0.741 | 0.67~0.69 | ❌ 작은 동작이 잘림 |
+| **+ 0.4 + 결정적인 순간 225개 (1,575 Feature)** | **0.835** | **0.784** | ✅ 최종 |
+
+- 결정적인 순간 특징: 동작 구간 안 45개 특징의 최대·최소·평균·표준편차 + 손목·발목 속도 합이 가장 큰 순간의 값 (`scripts/team03/team_summary_features.py`).
+- 서비스용: `artifacts/team03/day06/team_45d_segment_floor0.4_summary_3view_hflip_all5/` (`team_train_final_all.py --summary --floor 0.4`).
+- 자세한 과정: `reports/improvement_log.md` 34~36번.
+
 ## 아직 남은 개선 후보
 
 - 밀치기 ↔ 잡고 흔들기 ↔ 샷건처럼 팔로 하는 동작끼리의 혼동은 Pose만으로 풀리지 않았다. 물체 위치(ROI) 정보가 필요하다.

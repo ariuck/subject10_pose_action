@@ -50,8 +50,34 @@ def train_with_floor(floor: float) -> None:
     print(f"[SAVED] {path.relative_to(tb.ROOT)}")
 
 
+def train_with_summary(floor: float) -> None:
+    """동작 구간(기준선 최소값 floor) + 30 Step 시간표 + 결정적인 순간 특징 225개 (team_loso_summary.py 0.784 → 0.835)."""
+    import json
+    from team_loso_segment_v2 import load_clips
+    from team_loso_summary import build
+
+    config = tb.load_config()
+    steps, min_valid = int(config["sequence_steps"]), int(config["min_valid_frames"])
+    master = pd.concat([pd.read_csv(tb.SPLIT_DIR / f"{s}.csv") for s in ("train", "val", "test")], ignore_index=True)
+    data = build(load_clips(master, tb.SEQ_DIR), steps, min_valid, floor)
+    aug = build(load_clips(pd.read_csv(AUG / "manifests" / "hflip_manifest.csv"), AUG / "sequences"), steps, min_valid, floor)
+    train = pd.concat([data, aug], ignore_index=True)
+    model, cols = tb.train_model(train, config)
+    folder = f"team_45d_segment_floor{floor}_summary_3view_hflip_all5"
+    path = save_model(model, cols, train, config, "team_45d_segment", len(aug), folder=folder)
+    info = json.loads((path / "rf_training_info.json").read_text(encoding="utf-8"))
+    info.update({"segment_floor": floor, "summary_features": True, "summary_feature_count": 225,
+                 "frame_feature_count": 45, "feature_count": len(cols)})
+    (path / "rf_training_info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Train clips : {len(train)}, Features: {len(cols)} (시간표 {steps * 45} + 결정적 순간 225)")
+    print(f"[SAVED] {path.relative_to(tb.ROOT)}")
+
+
 def main() -> None:
     global NAME, FOLDER
+    if "--summary" in sys.argv:
+        train_with_summary(float(sys.argv[sys.argv.index("--floor") + 1]) if "--floor" in sys.argv else 0.4)
+        return
     if "--floor" in sys.argv:
         train_with_floor(float(sys.argv[sys.argv.index("--floor") + 1]))
         return
