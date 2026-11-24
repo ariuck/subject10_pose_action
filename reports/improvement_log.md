@@ -35,6 +35,8 @@
 | 26 | 7 | 3팀 모델은 Raw가 맞아도 전부 UNKNOWN | Threshold 하나만 0.55 → 0.20 | UNKNOWN 1.00 → 0.35, Stable 일치 0 → 0.65 |
 | 27 | 7 이후 | 팀 안에서 사람 ID 순서·동작 이름이 서로 달랐음 | 팀 기준으로 데이터 전체 이름을 바꾸고 다시 학습 | 데이터 값은 그대로, Test 0.76 → 0.65 (사람 구성 변화) |
 | 28 | 7 이후 | 측면 영상이 한쪽 방향으로만 찍힘 | Train 측면 51개를 Keypoint 단계에서 좌우 반전해 추가 | 45-D Validation 25 → 28개, Test는 22개 그대로 |
+| 29 | 8 | ByteTrack 실행 시 `lap` 패키지 없음 | `uv add lap` (교재에 없는 설치) | SBU 3개 Tracking 실행 |
+| 30 | 8 | Hugging 결과가 교재와 다름 (ID 1 16 vs 24 Frame) | 숫자 대신 결과 영상 Frame을 직접 확인 | ID Switch 아님, Track Lost 후 원래 ID로 재연결 |
 
 ---
 
@@ -374,6 +376,33 @@ python scripts/team03/team_day06_baseline.py save --condition team_45d
 
 ---
 
+## 8일차
+
+### 29. ByteTrack을 켜자 `lap` 패키지가 없다는 오류가 났다
+
+- **문제**: `47_track_sbu_video.py`를 실행하자 `ModuleNotFoundError: No module named 'lap'`으로 멈췄다. 결과 영상은 만들어졌지만 비어 있었고 Log는 없었다.
+- **원인**:
+  - ByteTrack은 Frame 사이에서 사람을 짝짓는 계산에 `lap` 패키지를 쓴다.
+  - 교재 설치 목록(`pyproject.toml`)에는 없다. Ultralytics가 없으면 pip로 자동 설치하는데, 우리 가상환경은 `uv`로 만들어 pip가 없어서 자동 설치가 실패했다.
+- **한 일**: `uv add lap`으로 설치했다(lap 0.5.14). `pyproject.toml`과 `uv.lock`에 기록돼 `uv sync`만 해도 다시 설치된다.
+- **결과**: SBU 영상 3개 Tracking이 모두 실행됐다.
+- **배운 점**: 교재 환경에서는 라이브러리가 몰래 설치해 주는 단계가 숨어 있을 수 있다. 오류 Traceback에서 어느 패키지의 어느 줄인지 끝까지 읽어야 원인이 보인다.
+
+### 30. Hugging Tracking 결과가 교재와 달랐다
+
+- **문제**: 교재는 ID 1이 33 Frame 중 24 Frame, 추가 ID가 4·5, Two-ID Ratio 0.6364였다. 우리는 ID 1이 16 Frame, 추가 ID가 3·4, Two-ID Ratio 0.5455였다.
+- **한 일**:
+  - Frame별 ID 목록과 BBox 중심 위치를 뽑아 ID가 사라진 구간(Frame 7~24)을 찾았다.
+  - 그 구간의 결과 영상 Frame을 직접 확인했다.
+- **결과**:
+  - 안고 있는 동안 흰 옷 사람(ID 2)의 BBox 하나가 두 사람을 덮고, 검은 옷 사람은 가려져 따로 잡히지 않았다.
+  - 떨어진 뒤 검은 옷 사람에게 원래 번호 ID 1이 다시 붙었다. 처음과 끝에 같은 사람이 같은 번호였다.
+  - ID 3·4는 box_conf 0.3대의 짧은 중복 Track이었다. 생긴 구간(Frame 6~11, 20~23)과 Confidence는 교재와 같았다.
+- **판단**: ID Switch가 아니라 Track Lost 후 재연결 + 중복 Track이다. 겹친 구간은 작은 계산 차이에도 결과가 흔들린다.
+- 근거: `reports/day08/id_switch_cases.md`
+
+---
+
 ## 공통
 
 ### 20. 팀원 개인정보
@@ -397,6 +426,8 @@ python scripts/team03/team_day06_baseline.py save --condition team_45d
 | 짧은 이상행동은 기본 Window에서 예측이 안 나옴 | 짧은 Window 실험 또는 동작 구간 검출 |
 | Threshold 0.20이 다른 동작에도 맞는지 모름 | 혼동이 많은 동작으로 같은 비교 |
 | IP Webcam 실시간 테스트 미완료 | 교재 6개 동작 + 3팀 A007을 카메라 앞에서 수행 |
+| 8일차 2인 IP Webcam·현장 Mini Challenge 미완료 | 두 사람이 카메라 앞에서 서로 다른 동작·교차·재등장 수행, 현장형 영상 촬영 |
+| 겹치면 한 사람이 가려져 Track이 끊김 | 카메라를 높게 달거나 두 방향 카메라 사용, Lost Timeout 조정 실험 |
 
 ---
 

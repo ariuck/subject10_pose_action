@@ -13,6 +13,7 @@ dependencies = [
     "matplotlib",
     "torch",
     "tqdm",
+    "lap>=0.5.14",
 ]
 
 [dependency-groups]

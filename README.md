@@ -311,6 +311,44 @@ scripts/team03/team_day07_runtime.py   3팀 모델 · 17개 동작 이름표로 
 scripts/team03/team_record_clip.py     폰 Stream으로 평가용 영상 녹화
 ```
 
+## Day 08 - Multi-Person Pose Tracking
+
+화면에 두 사람 이상이 있을 때 사람마다 Track ID를 붙이고, ID마다 Feature Buffer와 Action 상태를 따로 두도록 확장했다. 무인 상점처럼 여러 명이 동시에 있는 상황을 다루려면 먼저 "누구의 움직임인지"를 시간 방향으로 이어야 한다.
+
+```text
+Video / Phone Camera → YOLO Pose + ByteTrack → Track ID
+→ ID마다 38-D Feature → ID마다 5초 Sliding Window → 6일차 Random Forest
+→ ID마다 Stabilization → ID별 Action
+```
+
+SBU 2인 상호작용 영상 3개(640×480, 15 FPS)로 같은 코드를 돌려 상황별로 비교했다.
+
+| 영상 | Frame | Unique ID | 두 ID가 함께 잡힌 비율 | 추가 ID |
+|---|---:|---:|---:|---:|
+| 악수 | 30 | 2 | 1.00 | 0 |
+| 포옹 | 33 | 4 | 0.55 | 2 |
+| 발차기 | 18 | 2 | 1.00 | 0 |
+
+- 빠른 발차기에서는 ID가 끝까지 유지됐다. 흔들린 건 **두 사람이 겹친 포옹**이었다.
+- 포옹 중에는 앞사람 BBox 하나가 두 사람을 덮어, 뒤에 가려진 사람의 ID 1이 33 Frame 중 17 Frame에서 사라졌다. 낮은 Confidence(0.3대)의 짧은 Track 2개도 생겼다.
+- ID가 4개라는 숫자만 보면 ID Switch처럼 보인다. 그래서 결과 영상의 해당 Frame을 직접 확인했다. 떨어진 뒤 가려졌던 사람에게 **원래 번호 ID 1이 다시 붙었고**, 처음과 끝에 같은 사람이 같은 번호였다. 그래서 ID Switch가 아니라 Track Lost 후 재연결과 중복 Track으로 판단했다.
+- ID가 바뀌면 다른 사람의 Feature가 같은 Buffer에 섞인다. 사람별 Action이 맞으려면 Tracking이 먼저 맞아야 하는 이유다.
+
+사람별 상태는 Track ID를 키로 관리했다. 새 ID는 새 Buffer로 WARMING_UP부터 시작하고, 2초 넘게 안 보인 ID는 상태를 지운다. 잠깐 가려진 사람의 Buffer를 바로 지우지 않으려고 2초를 기다린다.
+
+교재 설치 목록에 없는 `lap` 패키지가 ByteTrack에 필요했다. 교재 환경에서는 Ultralytics가 pip로 자동 설치했지만, uv 가상환경에는 pip가 없어서 오류가 났다. `uv add lap`으로 설치하고 `pyproject.toml`에 기록했다.
+
+두 사람이 폰 카메라 앞에서 서로 다른 동작을 하는 실시간 실습과 현장형 영상 Mini Challenge는 아직 하지 않았다.
+
+결과: [`id_switch_cases.md`](reports/day08/id_switch_cases.md), [`day08_summary.md`](reports/day08/day08_summary.md)
+
+```text
+src/multi_person_utils.py                  Track ID별 Feature Buffer · Stabilizer · Lost Timeout 관리
+scripts/47_track_sbu_video.py              YOLO Pose + ByteTrack, 결과 영상과 Frame별 Track Log
+scripts/48_analyze_tracking_log.py         ID별 등장 구간 · Two-ID 비율 · 추가 ID 요약
+scripts/49_ip_webcam_multi_person_action.py 카메라 입력에서 사람별 Action 실시간 추론
+```
+
 ## 아직 부족한 점
 
 - **물체와 닿는 동작끼리 헷갈린다.**
@@ -327,5 +365,5 @@ scripts/team03/team_record_clip.py     폰 Stream으로 평가용 영상 녹화
   - 5명을 한 명씩 Test로 빼서 평균을 내는 평가가 필요하다.
 - **실시간 Threshold를 한 동작에서만 정했다.**
 - **짧은 동작을 놓친다.** 5초 Window는 4초를 채워야 예측을 시작해서, 짧은 두드리기·던지기는 Window를 줄이거나 동작 구간을 따로 찾아야 한다.
-- **한 사람만 본다.** 지금은 가장 확실한 사람 한 명만 분류한다. 무인 상점처럼 여러 명이 있으면 사람을 계속 따라가는 Tracking이 필요하다.
+- **여러 사람이 겹치면 Tracking이 끊긴다.** 8일차에 Track ID별 처리를 만들었지만, 포옹처럼 몸이 겹치면 뒤에 가려진 사람이 1초 넘게 사라졌다. 사람별 실시간 Action은 아직 카메라로 확인하지 못했다.
 - **Random Forest 하나만 써 봤다.** 시간 순서를 직접 다루는 시계열 모델(LSTM 등)과는 아직 비교하지 않았다.
