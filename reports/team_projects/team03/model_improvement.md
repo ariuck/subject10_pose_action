@@ -97,11 +97,13 @@
 | Train 구성 | 사람·동작마다 4개: 정면 T01 + 측면 T02 + 측면 반전 + 후면 T03 |
 | 예상 성능 | 처음 보는 사람 기준 Accuracy 약 0.75 (5명 평균 0.753, 범위 0.686~0.824) |
 | 선택 이유 | 교차 평가 정확도는 "후면만 추가"와 같은 수준이고, Confidence가 가장 높다. 실시간 서비스에서 확신 있는 예측이 더 많이 나오고, 측면 카메라가 반대쪽에 있는 경우도 대비할 수 있다. |
-| 저장 위치 | `artifacts/team03/day06/team_45d_3view_hflip/` (현재 S01~S03으로 학습한 모델) |
+| 서비스용 모델 | 구성을 정한 뒤 5명 전체 340개(원본 255 + 반전 85)로 다시 학습: `artifacts/team03/day06/team_45d_3view_hflip_all5/` (`scripts/team03/team_train_final_all.py`). 평가할 사람이 남지 않아 성능은 교차 평가 평균으로 추정한다. |
+| 비교용 모델 | `artifacts/team03/day06/team_45d_3view_hflip/` (S01~S03으로만 학습, 한 사람 Validation·Test용) |
+
+이 모델은 자율 프로젝트 웹 서비스 [`ariuck/vision_action_platform`](https://github.com/ariuck/vision_action_platform)에서 사용한다.
 
 ## 아직 남은 개선 후보
 
-- 서비스용 최종 모델은 5명 전체(255개 + 반전 85개)로 다시 학습한다. 성능 추정은 위 교차 평가 평균을 쓴다.
 - 밀치기 ↔ 잡고 흔들기 ↔ 샷건처럼 팔로 하는 동작끼리의 혼동은 Pose만으로 풀리지 않았다. 물체 위치(ROI) 정보가 필요하다.
 - 정상행동(물건 고르기·걷기) 영상이 없어 "정상 vs 이상"은 아직 판단할 수 없다.
 - 시간 순서를 직접 다루는 모델(LSTM·1D-CNN)과는 아직 비교하지 않았다.
