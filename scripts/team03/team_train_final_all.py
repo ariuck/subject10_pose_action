@@ -22,9 +22,14 @@ from team_train_hflip_aug import AUG, build_rows, save_model  # noqa: E402
 
 NAME = "team_45d"
 FOLDER = "team_45d_3view_hflip_all5"
+# --segment: 동작 구간만으로 학습 (team_loso_segment.py에서 LOSO 0.753 → 0.784)
+tb.CONDITIONS["team_45d_segment"] = {"team_features": True, "segment_only": True}
 
 
 def main() -> None:
+    global NAME, FOLDER
+    if "--segment" in sys.argv:
+        NAME, FOLDER = "team_45d_segment", "team_45d_segment_3view_hflip_all5"
     config = tb.load_config()
     cond = tb.CONDITIONS[NAME]
     master = pd.concat([pd.read_csv(tb.SPLIT_DIR / f"{s}.csv") for s in ("train", "val", "test")],

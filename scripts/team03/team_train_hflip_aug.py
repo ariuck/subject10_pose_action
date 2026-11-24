@@ -73,6 +73,8 @@ def save_model(model, cols, train: pd.DataFrame, config: dict, name: str, n_aug:
         "augmentation": "hflip of T02 (side) train clips",
         "augmented_clips": n_aug,
         "action_classes_csv": "configs/team03_action_classes.csv",
+        # 동작 구간(in_action)만 학습에 썼는지. True면 서비스도 같은 규칙으로 잘라서 넣어야 한다.
+        "segment_only": bool(cond.get("segment_only")),
     }
     (out / "rf_training_info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False), encoding="utf-8")
     return out

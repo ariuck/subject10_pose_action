@@ -102,6 +102,20 @@
 
 이 모델은 자율 프로젝트 웹 서비스 [`ariuck/vision_action_platform`](https://github.com/ariuck/vision_action_platform)에서 사용한다.
 
+## ⑥ 동작 구간만 잘라 학습·예측 (자율 프로젝트 중 추가)
+
+카메라 8초 녹화에 대기 시간이 섞여 동작이 묻히는 문제가 있어 비교했다 (`scripts/team03/team_loso_segment.py`, 위 최종 구성과 같은 45-D·후면·측면 반전).
+
+| 방법 | 평균 Accuracy | Macro F1 | 가장 낮은 사람 | 판단 |
+|---|---:|---:|---:|---|
+| 전체로 학습 → 전체로 예측 (위 최종 선택) | 0.753 | 0.751 | 0.686 | |
+| 전체로 학습 → 예측 때만 자르기 | 0.722 | 0.695 | 0.647 | ❌ 학습과 입력 모양이 달라져 나빠짐 |
+| **구간으로 학습 → 구간 예측** | **0.784** | **0.775** | **0.745** | ✅ 채택 |
+
+- 사람별: S01 0.686→0.745, S02 0.765→0.804, S03 0.824→0.765, S04 0.745→0.824, S05 0.745→0.784
+- 서비스용 모델을 이 방식으로 다시 학습: `artifacts/team03/day06/team_45d_segment_3view_hflip_all5/` (`team_train_final_all.py --segment`). `rf_training_info.json`의 `segment_only: true`로 서비스가 같은 규칙으로 자른다.
+- 예상 성능은 처음 보는 사람 기준 약 0.78로 바뀐다. 다만 실제 카메라 영상에서는 예측이 거의 바뀌지 않아, 카메라 환경 데이터가 더 필요하다.
+
 ## 아직 남은 개선 후보
 
 - 밀치기 ↔ 잡고 흔들기 ↔ 샷건처럼 팔로 하는 동작끼리의 혼동은 Pose만으로 풀리지 않았다. 물체 위치(ROI) 정보가 필요하다.
@@ -117,3 +131,4 @@
 | 반전 Clip 생성 | `scripts/team03/team_augment_hflip.py` |
 | 후면 추가 비교 (한 사람 Validation·Test) | `scripts/team03/team_train_3view_hflip.py` → `reports/team_projects/team03/day06/three_view/` |
 | 5명 교차 평가 | `scripts/team03/team_loso_compare.py` → `reports/team_projects/team03/day06/loso/` |
+| 동작 구간 자르기 비교 | `scripts/team03/team_loso_segment.py` → `reports/team_projects/team03/day06/loso/segment_summary.csv` |
