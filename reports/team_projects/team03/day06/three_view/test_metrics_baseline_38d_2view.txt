@@ -1,0 +1,26 @@
+test Accuracy: 0.4510
+test Macro F1: 0.4298
+
+                  precision    recall  f1-score   support
+
+       body_slam       0.17      1.00      0.29         3
+crouch_take_item       1.00      0.67      0.80         3
+   fall_backward       1.00      0.33      0.50         3
+    fall_forward       1.00      0.67      0.80         3
+   fall_sideways       0.00      0.00      0.00         3
+      front_kick       0.50      0.33      0.40         3
+      grab_shake       0.00      0.00      0.00         3
+       kiosk_tap       1.00      0.33      0.50         3
+    lie_backward       1.00      0.67      0.80         3
+     lie_forward       0.50      0.67      0.57         3
+            push       0.00      0.00      0.00         3
+         shotgun       0.50      0.33      0.40         3
+       sit_floor       0.43      1.00      0.60         3
+   sit_on_object       0.50      0.33      0.40         3
+           swing       0.00      0.00      0.00         3
+  throw_one_hand       1.00      0.33      0.50         3
+           vomit       0.60      1.00      0.75         3
+
+        accuracy                           0.45        51
+       macro avg       0.54      0.45      0.43        51
+    weighted avg       0.54      0.45      0.43        51

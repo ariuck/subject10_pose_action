@@ -1,4 +1,4 @@
-"""3팀 RGB 영상 170개의 Clip Manifest 만들기 (4일차 RGB 문서 STEP 1).
+"""3팀 RGB 영상 255개의 Clip Manifest 만들기 (4일차 RGB 문서 STEP 1).
 
 입력 : data/team_projects/team03/rgb/videos/S0x/S0x_A0nn_T0t.mp4
        configs/team03_action_classes.csv
@@ -7,7 +7,7 @@
 파일명 규칙 (5일차와 같은 Subject_Action_Take)
 - Subject : S01~S05 (실명 대신 가명 ID, 실명 연결표는 Git에 올리지 않음)
 - Action  : A001~A017 (configs/team03_action_classes.csv)
-- Take    : T01 = 정면(front), T02 = 측면(side) — 같은 동작을 다른 방향에서 따로 촬영
+- Take    : T01 = 정면(front), T02 = 측면(side), T03 = 후면(back) — 같은 동작을 다른 방향에서 따로 촬영
 """
 import csv
 import re
@@ -19,10 +19,10 @@ VIDEO_ROOT = ROOT / "data" / "team_projects" / "team03" / "rgb" / "videos"
 ACTION_FILE = ROOT / "configs" / "team03_action_classes.csv"
 OUTPUT = ROOT / "configs" / "team03_clip_manifest.csv"
 PATTERN = re.compile(r"^(S\d{2})_(A\d{3})_(T\d{2})\.mp4$")
-VIEW = {"T01": "front", "T02": "side"}
+VIEW = {"T01": "front", "T02": "side", "T03": "back"}
 EXPECTED_SUBJECTS = 5
 EXPECTED_ACTIONS = 17
-EXPECTED_TAKES = 2
+EXPECTED_TAKES = 3
 
 
 def main() -> None:

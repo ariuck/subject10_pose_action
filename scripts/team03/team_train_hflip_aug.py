@@ -48,8 +48,9 @@ def build_rows(manifest: pd.DataFrame, cond: dict, config: dict, seq_dir: Path) 
     return pd.DataFrame(rows)
 
 
-def save_model(model, cols, train: pd.DataFrame, config: dict, name: str, n_aug: int) -> Path:
-    out = tb.ARTIFACT_DIR / f"{name}_hflip"
+def save_model(model, cols, train: pd.DataFrame, config: dict, name: str, n_aug: int,
+               folder: str | None = None) -> Path:
+    out = tb.ARTIFACT_DIR / (folder or f"{name}_hflip")
     out.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, out / "rf_action_baseline.joblib")
     (out / "rf_feature_columns.json").write_text(json.dumps(cols, indent=2), encoding="utf-8")

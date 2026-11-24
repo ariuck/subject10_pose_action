@@ -30,7 +30,7 @@ def clip_summary(path: Path) -> dict:
     return {
         "clip_id": df.clip_id.iloc[0], "subject": df.subject.iloc[0], "action_id": df.action_id.iloc[0],
         "action_label": df.action_label.iloc[0], "take": df["take"].iloc[0],
-        "view": "front" if df["take"].iloc[0] == "T01" else "side",
+        "view": {"T01": "front", "T02": "side", "T03": "back"}[df["take"].iloc[0]],
         "action_frames": len(a),
         "tilt_max": a.torso_tilt_deg.quantile(0.95),
         "hip_floor_min": a.hip_floor_height.quantile(0.05),
