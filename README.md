@@ -5,13 +5,16 @@ YOLO Pose로 찾은 관절을 Feature로 바꾸고, 시간 변화를 Random Fore
 
 3팀 영상은 팀원 5명이 함께 촬영했습니다. 데이터 정리·QA, Feature 설계, 모델 학습·평가, 실시간 인식 연결은 개인 프로젝트로 직접 진행했습니다.
 진행하면서 막혔던 문제와 해결 과정은 [`reports/improvement_log.md`](reports/improvement_log.md)에 날짜순으로 적어 두었습니다.
+이 모델을 웹 서비스로 만든 자율 프로젝트는 [`ariuck/vision_action_platform`](https://github.com/ariuck/vision_action_platform)에 있습니다.
+
+![전체 흐름](docs/images/pipeline_overall.png)
 
 ## 핵심 결과
 
 | 항목 | 결과 |
 |---|---|
 | 데이터 | 3팀 영상 170개, 70,159 Frame 중 Pose 성공 99.7%, 자동 QA + 직접 확인으로 170개 승인 |
-| 동작 분류 (17개) | 5명을 한 번씩 Test로 뺀 평균 **Accuracy 0.753** (정면·측면·후면 255개 + 측면 반전, 45-D). 정면·측면만 학습했을 때 0.635 |
+| 동작 분류 (17개) | 5명을 한 번씩 Test로 뺀 평균 0.753 (정면·측면·후면 255개 + 측면 반전, 45-D, 정면·측면만이면 0.635) → 동작 구간 학습·결정적인 순간 특징·증강 7가지·ExtraTrees로 **0.881** (자율 프로젝트에서 이어서 개선, 무작위 시드 3번 평균) |
 | Feature 설계 | 측면 눕기에서 어깨 폭 정규화가 무너짐(차이 8.199) → 상체 길이 기준으로 바꿔 0.438, 팀 Feature 7개 추가로 Validation 오답 13 → 9 |
 | 실시간 인식 | 처음 보는 사람 영상에서 Raw 예측 20 / 26 정답, Threshold 조정으로 Stable 일치 비율 0 → 0.65 |
 
