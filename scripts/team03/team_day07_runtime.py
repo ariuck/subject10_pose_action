@@ -12,7 +12,7 @@
 사용 예:
   python scripts/team03/team_day07_runtime.py video --source data/day07/challenge/team03/videos/S93_A005_T01.mp4
   python scripts/team03/team_day07_runtime.py video --source ... --confidence 0.20
-  python scripts/team03/team_day07_runtime.py webcam --url "http://192.168.40.115:4747/video"
+  python scripts/team03/team_day07_runtime.py webcam --url "http://<휴대폰IP>:4747/video"
 """
 
 import csv

@@ -5,7 +5,7 @@
 녹화한 영상은 학습 데이터가 아니라 Runtime 평가용 입력이다.
 
 사용 예:
-  python scripts/team03/team_record_clip.py --url "http://192.168.40.115:4747/video" \
+  python scripts/team03/team_record_clip.py --url "http://<휴대폰IP>:4747/video" \
       --output data/day07/challenge/team03/videos/S93_A007_T01.mp4 --seconds 10
 """
 
